@@ -17,28 +17,28 @@
 # E.g., pip install fastapi uvicorn sqlalchemy (then add others if required)
 
 # Core Web Framework and Database, Authentication, and Environment Management
-fastapi==0.115.0
-uvicorn==0.30.0
-sqlalchemy==2.0.23
-pydantic==2.8.2
-python-dotenv==1.0.1
-email-validator==2.1.0.post1
+fastapi==0.127.0
+uvicorn==0.40.0
+sqlalchemy==2.0.45
+pydantic==2.12.5
+python-dotenv==1.2.1
+email-validator==2.3.0
 bcrypt==4.0.1      # for hashing passwords
 passlib[bcrypt]==1.7.4
-python-jose==3.3.0   # for JWT tokens (authentication)
-python-multipart==0.0.9  # for file uploads
-psycopg2-binary==2.9.9
-sounddevice==0.4.6   # for microphone recording
-soundfile==0.12.1    # for audio file handling
-numpy==1.24.3
-scikit-image==0.22.0
-tensorflow-cpu==2.15.0
-scikit-learn==1.3.2
-joblib==1.3.2
+python-jose==3.5.0   # for JWT tokens (authentication)
+python-multipart==0.0.21  # for file uploads
+psycopg2-binary==2.9.11
+sounddevice==0.5.3   # for microphone recording
+soundfile==0.13.1    # for audio file handling
+numpy==2.3.5
+scikit-image==0.26.0
+tensorflow-cpu==2.20.0
+scikit-learn==1.8.0
+joblib==1.5.3
 pyotp==2.9.0         # for TOTP authentication
 qrcode[pil]==7.4.2   # for QR code generation
-redis==5.0.1         # for rate limiting cache
-motor==3.3.2         # async MongoDB driver
+redis==4.6.0         # for rate limiting cache
+motor==3.2.0         # async MongoDB driver
 pymongo==4.4.0       # MongoDB driver
 gridfs==0.0.0        # for large file storage in MongoDB
 ffmpeg-python==0.2.0  # for audio/video processing
@@ -54,3 +54,142 @@ pytest-cov==4.1.0    # for test coverage reports
 coverage==7.3.3      # for measuring code coverage
 flake8==6.1.0        # for code linting
 black==24.9.1       # for code formatting
+
+
+# For more clarification on the versions, here are the versions used during development:
+# absl-py==2.3.1
+# annotated-doc==0.0.4
+# annotated-types==0.7.0
+# anyio==4.12.0
+# astunparse==1.6.3
+# audiolab==0.4.7
+# audiomentations==0.43.1
+# audioop-lts==0.2.2
+# audioread==3.1.0
+# av==16.0.1
+# bcrypt==4.0.1
+# certifi==2025.11.12
+# cffi==2.0.0
+# charset-normalizer==3.4.4
+# click==8.3.1
+# colorama==0.4.6
+# contourpy==1.3.3
+# cycler==0.12.1
+# decorator==5.2.1
+# dnspython==2.8.0
+# ecdsa==0.19.1
+# email-validator==2.3.0
+# fastapi==0.127.0
+# fastapi-limiter==0.1.5
+# ffmpeg-python==0.2.0
+# flake8==6.1.0
+# flatbuffers==25.12.19
+# fonttools==4.61.1
+# future==1.0.0
+# gast==0.7.0
+# google-pasta==0.2.0
+# greenlet==3.3.0
+# grpcio==1.76.0
+# h11==0.14.0
+# h5py==3.15.1
+# httpcore==0.17.3
+# httpx==0.24.1
+# humanize==4.15.0
+# idna==3.11
+# ImageIO==2.37.2
+# imbalanced-learn==0.14.1
+# iniconfig==2.3.0
+# Jinja2==3.1.6
+# joblib==1.5.3
+# keras==3.13.0
+# kiwisolver==1.4.9
+# lazy_loader==0.4
+# libclang==18.1.1
+# librosa==0.11.0
+# llvmlite==0.46.0
+# Markdown==3.10
+# markdown-it-py==4.0.0
+# MarkupSafe==3.0.3
+# matplotlib==3.10.8
+# mccabe==0.7.0
+# mdurl==0.1.2
+# ml_dtypes==0.5.4
+# motor==3.2.0
+# msgpack==1.1.2
+# namex==0.1.0
+# narwhals==2.14.0
+# networkx==3.6.1
+# numba==0.63.1
+# numpy==2.3.5
+# numpy-minmax==0.5.0
+# numpy-rms==0.6.0
+# opt_einsum==3.4.0
+# optree==0.18.0
+# packaging==25.0
+# pandas==2.3.3
+# passlib==1.7.4
+# pillow==12.0.0
+# platformdirs==4.5.1
+# plotly==6.5.0
+# pluggy==1.6.0
+# pooch==1.8.2
+# protobuf==6.33.2
+# psycopg2-binary==2.9.11
+# pyasn1==0.6.1
+# pycodestyle==2.11.1
+# pycparser==2.23
+# pydantic==2.12.5
+# pydantic_core==2.41.5
+# pyflakes==3.1.0
+# Pygments==2.19.2
+# pymongo==4.4.0
+# pyotp==2.9.0
+# pyparsing==3.3.1
+# pypng==0.20220715.0
+# pytest==7.4.0
+# pytest-asyncio==0.21.0
+# python-dateutil==2.9.0.post0
+# python-dotenv==1.2.1
+# python-jose==3.5.0
+# python-multipart==0.0.21
+# python-stretch==0.3.1
+# pytz==2025.2
+# qrcode==7.4.2
+# redis==4.6.0
+# requests==2.32.5
+# rich==14.2.0
+# rsa==4.9.1
+# scikit-image==0.26.0
+# scikit-learn==1.8.0
+# scipy==1.16.3
+# seaborn==0.13.2
+# setuptools==80.9.0
+# six==1.17.0
+# sklearn-compat==0.1.5
+# smart_open==7.5.0
+# sniffio==1.3.1
+# sounddevice==0.5.3
+# soundfile==0.13.1
+# soxr==0.5.0.post1
+# SQLAlchemy==2.0.45
+# standard-aifc==3.13.0
+# standard-chunk==3.13.0
+# standard-sunau==3.13.0
+# starlette==0.50.0
+# tensorboard==2.20.0
+# tensorboard-data-server==0.7.2
+# tensorflow_cpu==2.20.0
+# termcolor==3.2.0
+# tgt==1.5
+# threadpoolctl==3.6.0
+# tifffile==2025.12.20
+# tqdm==4.67.1
+# typing-inspection==0.4.2
+# typing_extensions==4.15.0
+# tzdata==2025.3
+# urllib3==2.6.2
+# uvicorn==0.40.0
+# wavesurfer==0.3.8
+# Werkzeug==3.1.4
+# wheel==0.45.1
+# wrapt==2.0.1
