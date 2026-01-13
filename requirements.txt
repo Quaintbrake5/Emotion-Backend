@@ -35,6 +35,7 @@ scikit-image==0.26.0
 tensorflow-cpu==2.20.0
 scikit-learn==1.8.0
 joblib==1.5.3
+librosa==0.11.0
 pyotp==2.9.0         # for TOTP authentication
 qrcode[pil]==7.4.2   # for QR code generation
 redis==4.6.0         # for rate limiting cache
