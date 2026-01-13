@@ -1,6 +1,5 @@
 import librosa
 import numpy as np
-import sounddevice as sd
 import soundfile as sf
 import os
 from skimage.transform import resize
@@ -8,6 +7,14 @@ from typing import Tuple, Dict, Any
 from utils.constants import SAMPLE_RATE
 import subprocess
 import tempfile
+
+# Try to import sounddevice, but handle gracefully if not available (e.g., in cloud deployments)
+try:
+    import sounddevice as sd
+    SOUNDDEVICE_AVAILABLE = True
+except (ImportError, OSError) as e:
+    SOUNDDEVICE_AVAILABLE = False
+    print(f"Warning: sounddevice not available: {e}. Microphone recording will not work in this environment.")
 
 def load_audio(file_path: str) -> np.ndarray:
     """Load audio file and return the signal."""
@@ -112,6 +119,11 @@ def generate_waveform_data(signal: np.ndarray, sample_rate: int = SAMPLE_RATE, p
 
 def record_audio(duration: int, sample_rate: int = SAMPLE_RATE) -> np.ndarray:
     """Record audio from microphone for specified duration."""
+    if not SOUNDDEVICE_AVAILABLE:
+        raise OSError("Microphone recording is not available in this deployment environment. "
+                     "PortAudio library is required but not installed. "
+                     "Please use the file upload feature instead.")
+
     print(f"Recording {duration} seconds of audio...")
     recording = sd.rec(int(duration * sample_rate), samplerate=sample_rate, channels=1, dtype='float32')
     sd.wait()  # Wait until recording is finished
