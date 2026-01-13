@@ -6,8 +6,8 @@ SAMPLE_RATE = 22050
 EMOTION_LABELS = ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad']
 
 # Model paths
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-MODEL_DIR = BASE_DIR / "Emotion-Dataset"
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_DIR = BASE_DIR / "models"
 
 # Load models
 try:
