@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 
 # Database configuration
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:XLR8*xlr8&@localhost:5433/EmotionDB"
+# Use environment variable for database URL, fallback to local for development
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:XLR8*xlr8&@localhost:5433/EmotionDB")
 
 # Connect to PostgreSQL with connection pooling
 engine = create_engine(

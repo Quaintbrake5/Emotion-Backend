@@ -17,7 +17,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Create all tables at startup
-models.Base.metadata.create_all(bind=database.engine)
+# Create database tables only if not in production (Render sets RENDER environment variable)
+if not os.getenv("RENDER"):
+    models.Base.metadata.create_all(bind=database.engine)
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -72,9 +74,11 @@ def root():
 # Server startup (for local development and deployment)
 if __name__ == "__main__":
     import uvicorn
+    port = int(os.environ.get("PORT", 8001))
+    print(f"Starting server on port {port}")
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 8001)),
+        port=port,
         reload=True
     )
