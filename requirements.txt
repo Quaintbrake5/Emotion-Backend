@@ -39,8 +39,7 @@ pyotp==2.9.0         # for TOTP authentication
 qrcode[pil]==7.4.2   # for QR code generation
 redis==4.6.0         # for rate limiting cache
 motor==3.2.0         # async MongoDB driver
-pymongo==4.4.0       # MongoDB driver
-gridfs==0.0.0        # for large file storage in MongoDB
+pymongo==4.4.0       # MongoDB driver (includes gridfs functionality)
 ffmpeg-python==0.2.0  # for audio/video processing
 # Another alternative for gridfs is 'pymongo[srv]' if needed
 
