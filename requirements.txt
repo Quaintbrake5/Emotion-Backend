@@ -1,0 +1,56 @@
+# Backend Requirements File
+# This file lists all the dependencies required for the Emotion Recognition Backend.
+# It includes libraries for web framework, database interaction, audio processing,
+# machine learning, authentication, and development tools.
+# Each dependency is pinned to a specific version to ensure compatibility.
+
+# To install the dependencies, run:
+# pip install -r requirements.txt
+# Or create a virtual environment and then install.
+# python -m venv venv
+# source venv/bin/activate  (Linux/Mac)
+# venv\Scripts\activate     (Windows)
+# pip install -r requirements.txt
+
+
+# Alternative: You can perform installations individually as needed.
+# E.g., pip install fastapi uvicorn sqlalchemy (then add others if required)
+
+# Core Web Framework and Database, Authentication, and Environment Management
+fastapi==0.115.0
+uvicorn==0.30.0
+sqlalchemy==2.0.23
+pydantic==2.8.2
+python-dotenv==1.0.1
+email-validator==2.1.0.post1
+bcrypt==4.0.1      # for hashing passwords
+passlib[bcrypt]==1.7.4
+python-jose==3.3.0   # for JWT tokens (authentication)
+python-multipart==0.0.9  # for file uploads
+psycopg2-binary==2.9.9
+sounddevice==0.4.6   # for microphone recording
+soundfile==0.12.1    # for audio file handling
+numpy==1.24.3
+scikit-image==0.22.0
+tensorflow-cpu==2.15.0
+scikit-learn==1.3.2
+joblib==1.3.2
+pyotp==2.9.0         # for TOTP authentication
+qrcode[pil]==7.4.2   # for QR code generation
+redis==5.0.1         # for rate limiting cache
+motor==3.3.2         # async MongoDB driver
+pymongo==4.4.0       # MongoDB driver
+gridfs==0.0.0        # for large file storage in MongoDB
+ffmpeg-python==0.2.0  # for audio/video processing
+# Another alternative for gridfs is 'pymongo[srv]' if needed
+
+
+# Development and Testing Tools
+fastapi-limiter==0.1.5  # for rate limiting
+pytest==7.4.0        # for testing
+pytest-asyncio==0.21.0  # for testing async code
+httpx==0.24.1        # for making HTTP requests in tests
+pytest-cov==4.1.0    # for test coverage reports
+coverage==7.3.3      # for measuring code coverage
+flake8==6.1.0        # for code linting
+black==24.9.1       # for code formatting
