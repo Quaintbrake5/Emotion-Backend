@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: emotion-recognition-api
+    runtime: python
+    buildCommand: "cd Emotion-Backend && pip install -r requirements.txt"
+    startCommand: "cd Emotion-Backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: RENDER
+        value: "true"
+      - key: MONGODB_URL
+        value:  "mongodb://localhost:27017"
+      - key: MONGODB_DATABASE
+        value: "emotion_recognition"

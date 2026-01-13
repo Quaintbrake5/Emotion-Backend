@@ -31,9 +31,13 @@ app = FastAPI(
 # MongoDB connection and setup
 @app.on_event("startup")
 async def startup_event():
-    await MongoDB.connect_to_mongo()
-    await create_indexes()
-    logger.info("Application startup complete")
+    try:
+        await MongoDB.connect_to_mongo()
+        await create_indexes()
+        logger.info("Application startup complete")
+    except Exception as e:
+        logger.error(f"Failed to connect to MongoDB during startup: {e}")
+        logger.warning("Application starting without MongoDB connection. Some features may not work.")
 
 @app.on_event("shutdown")
 async def shutdown_event():
