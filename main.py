@@ -18,8 +18,14 @@ logger = logging.getLogger(__name__)
 
 # Create all tables at startup
 # Create database tables only if not in production (Render sets RENDER environment variable)
-if not os.getenv("RENDER"):
-    models.Base.metadata.create_all(bind=database.engine)
+# On Render, create tables if DATABASE_URL is set
+if not os.getenv("RENDER") or os.getenv("DATABASE_URL"):
+    try:
+        models.Base.metadata.create_all(bind=database.engine)
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Failed to create database tables: {e}")
+        logger.warning("Application starting without database tables. User registration may not work.")
 
 # Initialize FastAPI app
 app = FastAPI(
