@@ -9,6 +9,4 @@ services:
       - key: RENDER
         value: "true"
       - key: MONGODB_URL
-        value: "mongodb+srv://denzylibe04_db_user:XLR8xlr8@emotion-cluster.oxvquc3.mongodb.net/"
-      - key: MONGODB_DATABASE
-        value: "emotion_recognition"
+        value: "mongodb+srv://denzylibe04_db_user:XLR8*xlr8&@emotion.qlircss.mongodb.net/?appName=Emotion"

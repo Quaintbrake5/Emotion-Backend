@@ -1,4 +1,5 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+# from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.mongo_client import MongoClient
 from pymongo.errors import ConnectionFailure
 import logging
 import os
@@ -7,23 +8,23 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 class MongoDB:
-    client: Optional[AsyncIOMotorClient] = None # pyright: ignore[reportInvalidTypeForm]
+    client: Optional[MongoClient]
     database: Optional[object] = None
     fs: Optional[object] = None  # GridFS for large files
 
     @classmethod
     async def connect_to_mongo(cls):
         """Connect to MongoDB"""
-        mongo_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        mongo_url = os.getenv("MONGODB_URL", "mongodb+srv://denzylibe04_db_user:XLR8*xlr8&@emotion.qlircss.mongodb.net/?appName=Emotion")
         database_name = os.getenv("MONGODB_DATABASE", "emotion_recognition")
 
         try:
-            cls.client = AsyncIOMotorClient(mongo_url)
+            cls.client = MongoClient(mongo_url)
             # Test the connection
             await cls.client.admin.command('ping')
             cls.database = cls.client[database_name]
             # cls.fs = AsyncIOMotorGridFS(cls.database)  # Temporarily commented out
-            logger.info(f"Connected to MongoDB: {database_name}")
+            logger.info(f"Pinged your deployment. You successfully connected to MongoDB: {database_name}")
         except ConnectionFailure as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise
