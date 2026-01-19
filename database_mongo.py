@@ -25,7 +25,7 @@ class MongoDB:
                 tlsAllowInvalidCertificates=False,
                 tlsAllowInvalidHostnames=False,
                 serverSelectionTimeoutMS=5000,
-                ssl_context=ssl.create_default_context()
+                ssl_version=ssl.PROTOCOL_TLSv1_2
             )
             # Test the connection
             await cls.client.admin.command('ping')
