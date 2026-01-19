@@ -1,5 +1,4 @@
-# from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo.mongo_client import MongoClient
+from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import ConnectionFailure
 import logging
 import os
@@ -8,9 +7,9 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 class MongoDB:
-    client: Optional[MongoClient]
-    database: Optional[object] = None
-    fs: Optional[object] = None  # GridFS for large files
+    client: Optional["AsyncIOMotorClient"] # type: ignore
+    database = None
+    fs = None  # GridFS for large files
 
     @classmethod
     async def connect_to_mongo(cls):
@@ -19,7 +18,7 @@ class MongoDB:
         database_name = os.getenv("MONGODB_DATABASE", "emotion_recognition")
 
         try:
-            cls.client = MongoClient(mongo_url)
+            cls.client = AsyncIOMotorClient(mongo_url)
             # Test the connection
             await cls.client.admin.command('ping')
             cls.database = cls.client[database_name]

@@ -8,5 +8,7 @@ services:
     envVars:
       - key: RENDER
         value: "true"
+      - key: DATABASE_URL
+        value: "postgresql://your_render_postgres_connection_string_here"
       - key: MONGODB_URL
         value: "mongodb+srv://denzylibe04_db_user:XLR8*xlr8&@emotion.qlircss.mongodb.net/?appName=Emotion"
