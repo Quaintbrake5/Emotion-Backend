@@ -2,6 +2,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.errors import ConnectionFailure
 import logging
 import os
+import ssl
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,8 @@ class MongoDB:
                 tls=True,
                 tlsAllowInvalidCertificates=False,
                 tlsAllowInvalidHostnames=False,
-                serverSelectionTimeoutMS=5000
+                serverSelectionTimeoutMS=5000,
+                ssl_context=ssl.create_default_context()
             )
             # Test the connection
             await cls.client.admin.command('ping')

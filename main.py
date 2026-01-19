@@ -77,7 +77,7 @@ def health_check():
     return {"status": "healthy", "version": "2.0.0"}
 
 # Root endpoint
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"message": "Welcome to the Emotion Recognition API"}
 
