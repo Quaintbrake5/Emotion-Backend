@@ -14,11 +14,17 @@ class MongoDB:
     @classmethod
     async def connect_to_mongo(cls):
         """Connect to MongoDB"""
-        mongo_url = os.getenv("MONGODB_URL", "mongodb+srv://denzylibe04_db_user:XLR8*xlr8&@emotion.qlircss.mongodb.net/?appName=Emotion")
+        mongo_url = os.getenv("MONGODB_URL", "mongodb+srv://denzylibe04_db_user:XLR8*xlr8%26@emotion.qlircss.mongodb.net/?appName=Emotion")
         database_name = os.getenv("MONGODB_DATABASE", "emotion_recognition")
 
         try:
-            cls.client = AsyncIOMotorClient(mongo_url)
+            cls.client = AsyncIOMotorClient(
+                mongo_url,
+                tls=True,
+                tlsAllowInvalidCertificates=False,
+                tlsAllowInvalidHostnames=False,
+                serverSelectionTimeoutMS=5000
+            )
             # Test the connection
             await cls.client.admin.command('ping')
             cls.database = cls.client[database_name]
