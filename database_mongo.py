@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 
 class MongoDB:
-    client: Optional[AsyncIOMotorClient] = None
+    client: Optional[AsyncIOMotorClient] = None # pyright: ignore[reportInvalidTypeForm]
     database = None
     fs = None  # GridFS placeholder if you add it later
 
