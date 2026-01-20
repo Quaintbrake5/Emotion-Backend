@@ -6,7 +6,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 class MongoDB:
-    client: Optional[AsyncIOMotorClient] = None
+    client: Optional[AsyncIOMotorClient] = None # type: ignore
     database = None
     fs = None  # GridFS for large files
 
