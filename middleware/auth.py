@@ -269,22 +269,16 @@ async def delete_user_me(
 ):
     logger.info(f"Request received: {request.method} {request.url.path} for user {current_user.username}")
     try:
-        # Get all predictions and audio files for this user
-        predictions = db.query(Prediction).filter(Prediction.user_id == current_user.id).all()
-        audio_files = db.query(AudioFile).filter(AudioFile.user_id == current_user.id).all()
+        # Log the account deletion activity before deleting
+        analytics_service = AnalyticsService(db)
+        analytics_service.log_user_activity(
+            user_id=current_user.id,
+            action="account_deleted",
+            ip_address=request.client.host if request else None,
+            user_agent=request.headers.get("user-agent") if request else None
+        )
 
-        # Delete associated files from filesystem
-        for prediction in predictions:
-            # Note: In a real implementation, you'd delete the actual audio files here
-            # For now, we'll just delete the database records
-            pass
-
-        for audio_file in audio_files:
-            # Note: In a real implementation, you'd delete the actual audio files here
-            # For now, we'll just delete the database records
-            pass
-
-        # Delete all predictions and audio files
+        # Delete all predictions and audio files first (to avoid foreign key issues)
         db.query(Prediction).filter(Prediction.user_id == current_user.id).delete()
         db.query(AudioFile).filter(AudioFile.user_id == current_user.id).delete()
 
