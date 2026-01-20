@@ -54,6 +54,14 @@ async def shutdown_event():
     await MongoDB.close_mongo_connection()
     logger.info("Application shutdown complete")
 
+# CORS - Add this first
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Add custom middleware
 app.add_middleware(RateLimitingMiddleware)
 app.add_middleware(OTPMiddleware)
@@ -66,14 +74,6 @@ app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 app.include_router(export.router, prefix="/export", tags=["export"])
 app.include_router(visualization.router, prefix="/visualization", tags=["visualization"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
-
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Health check endpoint with dual-database status
 @app.api_route("/health", methods=["GET", "HEAD"])
