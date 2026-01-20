@@ -57,9 +57,15 @@ async def shutdown_event():
 # CORS - Add this first
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://emotion-frontend-seven.vercel.app",
+        "https://emotion-frontend.vercel.app"
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 # Add custom middleware

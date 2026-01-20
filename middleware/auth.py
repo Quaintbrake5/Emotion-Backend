@@ -237,6 +237,30 @@ async def update_user_me(
         db.rollback()
         raise HTTPException(status_code=500, detail="Internal server error during update")
 
+@router.post("/logout")
+async def logout(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    request: Request = None
+):
+    logger.info(f"Request received: {request.method} {request.url.path} for user {current_user.username}")
+    try:
+        # Log the logout activity
+        analytics_service = AnalyticsService(db)
+        analytics_service.log_user_activity(
+            user_id=current_user.id,
+            action="logout",
+            ip_address=request.client.host if request else None,
+            user_agent=request.headers.get("user-agent") if request else None
+        )
+
+        logger.info(f"User {current_user.username} logged out successfully")
+        return {"message": "Logged out successfully"}
+
+    except Exception as e:
+        logger.error(f"Logout failed for user {current_user.username}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error during logout")
+
 @router.delete("/users/me")
 async def delete_user_me(
     current_user: User = Depends(get_current_active_user),
