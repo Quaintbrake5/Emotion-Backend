@@ -26,18 +26,23 @@ app = FastAPI(
 # Database initialization at startup
 @app.on_event("startup")
 async def startup_event():
-    # Initialize PostgreSQL tables if DATABASE_URL is available
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
+    # Initialize PostgreSQL tables
+    try:
+        models.Base.metadata.create_all(bind=database.engine)
+        logger.info("PostgreSQL tables created/verified successfully")
+
+        # Seed admin user after tables are created
         try:
-            models.Base.metadata.create_all(bind=database.engine)
-            logger.info("PostgreSQL tables created/verified successfully")
+            from utils.seed_admin import seed_admin_user
+            seed_admin_user()
+            logger.info("Admin user seeded successfully")
         except Exception as e:
-            logger.error(f"Failed to create PostgreSQL tables: {e}")
-            logger.warning("PostgreSQL tables not created. User features may not work.")
-    else:
-        logger.warning("DATABASE_URL not set. PostgreSQL features disabled.")
-    
+            logger.error(f"Failed to seed admin user: {e}")
+
+    except Exception as e:
+        logger.error(f"Failed to create PostgreSQL tables: {e}")
+        logger.warning("PostgreSQL tables not created. User features may not work.")
+
     # Initialize MongoDB connection
     try:
         await MongoDB.connect_to_mongo()
@@ -46,7 +51,7 @@ async def startup_event():
     except Exception as e:
         logger.error(f"Failed to connect to MongoDB during startup: {e}")
         logger.warning("Application starting without MongoDB connection. Analytics features may not work.")
-    
+
     logger.info("Application startup complete with dual-database support")
 
 @app.on_event("shutdown")
