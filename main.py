@@ -68,12 +68,12 @@ app.add_middleware(OTPMiddleware)
 
 # Register route blueprints
 app.include_router(auth.router, prefix="/auth", tags=["authentication"])
-app.include_router(audio.router, prefix="/audio", tags=["audio"])
-app.include_router(user.router, prefix="/users", tags=["user"])
-app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
-app.include_router(export.router, prefix="/export", tags=["export"])
-app.include_router(visualization.router, prefix="/visualization", tags=["visualization"])
-app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(audio, prefix="/audio", tags=["audio"])
+app.include_router(user, prefix="/users", tags=["user"])
+app.include_router(analytics, prefix="/analytics", tags=["analytics"])
+app.include_router(export, prefix="/export", tags=["export"])
+app.include_router(visualization, prefix="/visualization", tags=["visualization"])
+app.include_router(admin, prefix="/admin", tags=["admin"])
 
 # Health check endpoint with dual-database status
 @app.api_route("/health", methods=["GET", "HEAD"])
