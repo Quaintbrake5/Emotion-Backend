@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from passlib.context import CryptContext
 from database import get_db
-from models import AudioFile, Prediction, User
+from models import AudioFile, Prediction, User, UserActivity, UserStatistics
 from schema import UserCreate, UserResponse, AdminUserResponse, Token, UserUpdate, PasswordResetRequest, PasswordResetConfirm, EmailVerificationConfirm, TokenRefreshRequest, TokenRefreshResponse
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -13,7 +13,7 @@ import logging
 import secrets
 from services.email_service import EmailService
 from services.analytics_service import AnalyticsService
-# from services.otp_service import OTPService  # Temporarily commented out due to missing pyotp dependency
+from services.otp_service import OTPService
 from schema import OTPSetupRequest, OTPSetupResponse, OTPVerifyRequest, OTPDisableRequest, OTPBackupCodeRequest
 
 SECRET_KEY = "your-secret-key"  # Change this to a secure key
@@ -281,6 +281,12 @@ async def delete_user_me(
         # Delete all predictions and audio files first (to avoid foreign key issues)
         db.query(Prediction).filter(Prediction.user_id == current_user.id).delete()
         db.query(AudioFile).filter(AudioFile.user_id == current_user.id).delete()
+
+        # Delete all user activities
+        db.query(UserActivity).filter(UserActivity.user_id == current_user.id).delete()
+
+        # Delete user statistics
+        db.query(UserStatistics).filter(UserStatistics.user_id == current_user.id).delete()
 
         # Delete the user
         db.delete(current_user)
