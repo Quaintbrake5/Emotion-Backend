@@ -51,25 +51,35 @@ class RateLimitingService:
             return self._check_memory_rate_limit(identifier, action, limit, window_seconds, current_time)
 
     def _check_redis_rate_limit(self, identifier: str, action: str, limit: int, window_seconds: int, current_time: float) -> bool:
+        if not self.redis_client:
+            return self._check_memory_rate_limit(identifier, action, limit, window_seconds, current_time)
+
         key = self._get_redis_key(identifier, action)
 
-        # Use Redis sorted set to store timestamps
-        # Remove old entries outside the window
-        min_time = current_time - window_seconds
-        self.redis_client.zremrangebyscore(key, '-inf', min_time)
+        try:
+            # Use Redis sorted set to store timestamps
+            # Remove old entries outside the window
+            min_time = current_time - window_seconds
+            self.redis_client.zremrangebyscore(key, '-inf', min_time)
 
-        # Count current requests in window
-        request_count = self.redis_client.zcard(key)
+            # Count current requests in window
+            request_count = self.redis_client.zcard(key)
 
-        if request_count >= limit:
-            return True
+            if request_count >= limit:
+                return True
 
-        # Add current request
-        self.redis_client.zadd(key, {str(current_time): current_time})
-        # Set expiration on the key
-        self.redis_client.expire(key, window_seconds)
+            # Add current request
+            self.redis_client.zadd(key, {str(current_time): current_time})
+            # Set expiration on the key
+            self.redis_client.expire(key, window_seconds)
 
-        return False
+            return False
+        except (redis.ConnectionError, redis.TimeoutError) as e:
+            logger.warning(f"Redis connection failed during rate limit check, falling back to in-memory: {e}")
+            self.redis_client = None  # Disable Redis for future calls
+            if not hasattr(self, 'in_memory_limits'):
+                self.in_memory_limits = defaultdict(list)
+            return self._check_memory_rate_limit(identifier, action, limit, window_seconds, current_time)
 
     def _check_memory_rate_limit(self, identifier: str, action: str, limit: int, window_seconds: int, current_time: float) -> bool:
         key = self._get_in_memory_key(identifier, action)
@@ -91,10 +101,21 @@ class RateLimitingService:
         current_time = time.time()
 
         if self.redis_client:
-            key = self._get_redis_key(identifier, action)
-            min_time = current_time - window_seconds
-            self.redis_client.zremrangebyscore(key, '-inf', min_time)
-            request_count = self.redis_client.zcard(key)
+            try:
+                key = self._get_redis_key(identifier, action)
+                min_time = current_time - window_seconds
+                self.redis_client.zremrangebyscore(key, '-inf', min_time)
+                request_count = self.redis_client.zcard(key)
+            except (redis.ConnectionError, redis.TimeoutError) as e:
+                logger.warning(f"Redis connection failed in get_remaining_requests, falling back to in-memory: {e}")
+                self.redis_client = None
+                if not hasattr(self, 'in_memory_limits'):
+                    self.in_memory_limits = defaultdict(list)
+                key = self._get_in_memory_key(identifier, action)
+                timestamps = self.in_memory_limits[key]
+                min_time = current_time - window_seconds
+                timestamps[:] = [t for t in timestamps if t > min_time]
+                request_count = len(timestamps)
         else:
             key = self._get_in_memory_key(identifier, action)
             timestamps = self.in_memory_limits[key]
@@ -109,16 +130,22 @@ class RateLimitingService:
         current_time = time.time()
 
         if self.redis_client:
-            key = self._get_redis_key(identifier, action)
-            # Get the oldest timestamp in the current window
-            oldest = self.redis_client.zrange(key, 0, 0, withscores=True)
-            if oldest:
-                return oldest[0][1] + window_seconds
-        else:
-            key = self._get_in_memory_key(identifier, action)
-            timestamps = self.in_memory_limits[key]
-            if timestamps:
-                return min(timestamps) + window_seconds
+            try:
+                key = self._get_redis_key(identifier, action)
+                # Get the oldest timestamp in the current window
+                oldest = self.redis_client.zrange(key, 0, 0, withscores=True)
+                if oldest:
+                    return oldest[0][1] + window_seconds
+            except (redis.ConnectionError, redis.TimeoutError) as e:
+                logger.warning(f"Redis connection failed in get_reset_time, falling back to in-memory: {e}")
+                self.redis_client = None
+                if not hasattr(self, 'in_memory_limits'):
+                    self.in_memory_limits = defaultdict(list)
+
+        key = self._get_in_memory_key(identifier, action)
+        timestamps = self.in_memory_limits[key]
+        if timestamps:
+            return min(timestamps) + window_seconds
 
         return current_time + window_seconds
 
