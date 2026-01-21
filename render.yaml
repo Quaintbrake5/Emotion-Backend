@@ -1,4 +1,7 @@
 services:
+  - type: redis
+    name: emotion-redis
+    ipAllowList: []  # Allow access from all IPs; adjust as needed for security
   - type: web
     name: emotion-recognition-api
     runtime: python

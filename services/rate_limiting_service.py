@@ -4,6 +4,7 @@ from collections import defaultdict
 from typing import Dict, Tuple
 import redis
 import os
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -12,12 +13,26 @@ class RateLimitingService:
         self.redis_client = None
         try:
             # Try to connect to Redis if available
-            self.redis_client = redis.Redis(
-                host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", 6379)),
-                db=int(os.getenv("REDIS_DB", 0)),
-                decode_responses=True
-            )
+            redis_url = os.getenv("REDIS_URL")
+            if redis_url:
+                # Parse Redis URL for Render deployment
+                parsed = urlparse(redis_url)
+                self.redis_client = redis.Redis(
+                    host=parsed.hostname,
+                    port=parsed.port,
+                    username=parsed.username,
+                    password=parsed.password,
+                    db=int(parsed.path.lstrip('/')) if parsed.path else 0,
+                    decode_responses=True
+                )
+            else:
+                # Fallback to individual env vars for local development
+                self.redis_client = redis.Redis(
+                    host=os.getenv("REDIS_HOST", "localhost"),
+                    port=int(os.getenv("REDIS_PORT", 6379)),
+                    db=int(os.getenv("REDIS_DB", 0)),
+                    decode_responses=True
+                )
             self.redis_client.ping()  # Test connection
             logger.info("Connected to Redis for rate limiting")
         except (redis.ConnectionError, redis.TimeoutError):
