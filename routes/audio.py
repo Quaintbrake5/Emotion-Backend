@@ -33,6 +33,15 @@ async def record_and_predict_emotion(
         # Save temporary file
         temp_path = save_audio_temp(recording, f"temp_voice_{current_user.id}_{datetime.now().timestamp()}.wav")
 
+        # Check if models are loaded
+        from utils.constants import extractor, svm_model
+        if extractor is None or svm_model is None:
+            logger.error("ML models not loaded - cannot process audio prediction")
+            raise HTTPException(
+                status_code=503,
+                detail="Service temporarily unavailable: Machine learning models are not loaded. Please contact support."
+            )
+
         # Process audio and predict emotion
         emotion_probabilities = process_audio_for_prediction(recording)
 

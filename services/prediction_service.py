@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def get_embedding(spectrogram: np.ndarray) -> np.ndarray:
     """Get prediction from CNN model."""
     if extractor is None:
-        raise ValueError("CNN model not loaded")
+        raise ValueError("CNN model not loaded. Please ensure the model file 'best_cnn.keras' exists in the models directory and TensorFlow is properly installed.")
     # spectrogram should already be in shape (height, width, channels)
     spectrogram = spectrogram[np.newaxis, ...]  # Add batch dimension
     prediction = extractor.predict(spectrogram)
@@ -20,7 +20,7 @@ def get_embedding(spectrogram: np.ndarray) -> np.ndarray:
 def predict_emotion(embedding: np.ndarray) -> Dict[str, float]:
     """Extract emotion probabilities from SVM prediction on CNN embedding."""
     if svm_model is None:
-        raise ValueError("SVM model not loaded")
+        raise ValueError("SVM model not loaded. Please ensure the model file 'best_svm.pkl' exists in the models directory and scikit-learn is properly installed.")
 
     # Get probabilities from SVM
     probabilities = svm_model.predict_proba(embedding.reshape(1, -1))[0]

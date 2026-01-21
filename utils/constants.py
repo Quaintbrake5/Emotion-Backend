@@ -14,46 +14,44 @@ try:
     from tensorflow.keras.models import load_model # type: ignore
     from tensorflow.keras import models # type: ignore
     import joblib
+    import logging
+
+    logger = logging.getLogger(__name__)
 
     extractor_path = MODEL_DIR / "best_cnn.keras"
     svm_path = MODEL_DIR / "best_svm.pkl"
+
+    extractor = None
+    svm_model = None
 
     if extractor_path.exists():
         try:
             # Try to load the model normally
             cnn = load_model(str(extractor_path))
-        except (ValueError, TypeError) as e:
-            # If there's a compatibility issue (like quantization_config), try custom loading
-            print(f"Model loading failed due to compatibility issue: {e}")
-            print("Attempting to rebuild model from quick_train.py architecture...")
-
-            # Rebuild the model with the same architecture as quick_train.py
-            from tensorflow.keras import layers # type: ignore
-            inputs = layers.Input(shape=(150, 120, 1))
-            x = layers.Conv2D(16, 3, padding="same", activation="relu")(inputs)
-            x = layers.MaxPooling2D(2)(x)
-            x = layers.Conv2D(32, 3, padding="same", activation="relu")(x)
-            x = layers.MaxPooling2D(2)(x)
-            x = layers.GlobalAveragePooling2D()(x)
-            x = layers.Dense(64, activation="relu", name="embedding")(x)
-            outputs = layers.Dense(6, activation="softmax")(x)
-            cnn = models.Model(inputs, outputs)
-
-            print("Rebuilt model with compatible architecture")
-
-        # Create extractor that outputs embeddings from the embedding layer
-        extractor = models.Model(cnn.input, cnn.get_layer("embedding").output)
+            # Create extractor that outputs embeddings from the embedding layer
+            extractor = models.Model(cnn.input, cnn.get_layer("embedding").output)
+            logger.info("CNN model loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load CNN model: {e}")
+            print(f"Error: CNN model loading failed: {e}")
     else:
-        extractor = None
-        print("Warning: CNN model not found")
+        logger.warning(f"CNN model not found at {extractor_path}")
+        print(f"Warning: CNN model not found at {extractor_path}")
 
     if svm_path.exists():
-        svm_model = joblib.load(str(svm_path))
+        try:
+            svm_model = joblib.load(str(svm_path))
+            logger.info("SVM model loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load SVM model: {e}")
+            print(f"Error: SVM model loading failed: {e}")
     else:
-        svm_model = None
-        print("Warning: SVM model not found")
+        logger.warning(f"SVM model not found at {svm_path}")
+        print(f"Warning: SVM model not found at {svm_path}")
 
-except ImportError:
+except ImportError as e:
     extractor = None
     svm_model = None
-    print("Warning: TensorFlow or joblib not installed")
+    logger = logging.getLogger(__name__)
+    logger.error(f"Required ML libraries not available: {e}")
+    print(f"Warning: TensorFlow or joblib not installed: {e}")

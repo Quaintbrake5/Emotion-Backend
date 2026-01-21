@@ -89,13 +89,26 @@ app.include_router(admin, prefix="/admin", tags=["admin"])
 # Health check endpoint with dual-database status
 @app.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
+    from utils.constants import extractor, svm_model
+
+    # Check model status
+    models_status = {
+        "cnn_model": "loaded" if extractor is not None else "not_loaded",
+        "svm_model": "loaded" if svm_model is not None else "not_loaded"
+    }
+
+    # Overall status
+    all_models_loaded = all(status == "loaded" for status in models_status.values())
+    overall_status = "healthy" if all_models_loaded else "degraded"
+
     status = {
-        "status": "healthy", 
+        "status": overall_status,
         "version": "2.0.0",
         "databases": {
             "postgresql": "connected" if os.getenv("DATABASE_URL") else "not_configured",
             "mongodb": "connected" if MongoDB.database else "not_connected"
-        }
+        },
+        "models": models_status
     }
     return status
 
