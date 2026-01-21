@@ -17,3 +17,9 @@ services:
         value: "mongodb+srv://denzylibe04_db_user:XLR8*xlr8%26@emotion.qlircss.mongodb.net/emotion_recognition?retryWrites=true&w=majority&appName=Emotion"
       - key: MONGO_DATABASE
         value: "emotion_recognition"
+      - key: REDIS_URL
+        value: "rediss://default:AZ45AAIncDE2NWY4M2RhZmY5M2Y0ZTFlODg2ZmZiMzg0ODkzNmQwZHAxNDA1MDU@hip-dingo-40505.upstash.io:6379"
+      - key: UPSTASH_REDIS_REST_URL
+        value: "https://hip-dingo-40505.upstash.io"
+      - key: UPSTASH_REDIS_REST_TOKEN
+        value: "AZ45AAIncDE2NWY4M2RhZmY5M2Y0ZTFlODg2ZmZiMzg0ODkzNmQwZHAxNDA1MDU"

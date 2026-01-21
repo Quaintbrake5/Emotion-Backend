@@ -15,16 +15,8 @@ class RateLimitingService:
             # Try to connect to Redis if available
             redis_url = os.getenv("REDIS_URL")
             if redis_url:
-                # Parse Redis URL for Render deployment
-                parsed = urlparse(redis_url)
-                self.redis_client = redis.Redis(
-                    host=parsed.hostname,
-                    port=parsed.port,
-                    username=parsed.username,
-                    password=parsed.password,
-                    db=int(parsed.path.lstrip('/')) if parsed.path else 0,
-                    decode_responses=True
-                )
+                # Use redis.from_url() for proper handling of Redis URLs (including rediss:// for TLS)
+                self.redis_client = redis.from_url(redis_url, decode_responses=True)
             else:
                 # Fallback to individual env vars for local development
                 self.redis_client = redis.Redis(
