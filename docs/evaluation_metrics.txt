@@ -1,0 +1,53 @@
+# Evaluation Metrics Report
+
+## Overall Performance
+- Test Accuracy: 66%
+- Samples Evaluated: 3,400
+- Model Type: CNN feature extractor → SVM classifier
+- Training Duration: ~24 hours (CPU-only)
+
+## Per-Class Evaluation Metrics
+| Emotion  | Precision | Recall | F1-Score | Support |
+|----------|-----------|--------|----------|---------|
+| Angry    | 0.80      | 0.76   | 0.78     | 586     |
+| Disgust  | 0.64      | 0.62   | 0.63     | 585     |
+| Fear     | 0.65      | 0.53   | 0.58     | 585     |
+| Happy    | 0.68      | 0.59   | 0.63     | 586     |
+| Neutral  | 0.66      | 0.79   | 0.72     | 473     |
+| Sad      | 0.55      | 0.68   | 0.61     | 585     |
+
+## Aggregate Metrics
+### Macro Average
+- Precision: 0.66
+- Recall: 0.66
+- F1-Score: 0.66
+
+### Weighted Average
+- Precision: 0.66
+- Recall: 0.66
+- F1-Score: 0.66
+
+## Key Observations
+1. **Anger Bias — Yes, but controlled**
+   - Anger has the highest F1-score (0.78) and highest precision (0.80)
+   - This confirms residual anger bias
+   - However:
+     - Recall is not extreme (0.76)
+     - Other classes (Neutral, Happy) are still competitive
+   - This is typical for speech-emotion datasets, not a failure.
+
+2. **Neutral is learned very well**
+   - Recall = 0.79 (highest)
+   - Indicates strong recognition of baseline speech patterns
+   - Confirms MFCC + CNN embeddings are meaningful
+
+3. **Fear is the weakest class**
+   - Lowest recall (0.53)
+   - Common issue in RAVDESS + CREMA-D due to:
+     - Overlap with sad / neutral
+     - Weaker vocal markers
+
+4. **No class collapse**
+   - No class has near-zero recall
+   - No class dominates predictions
+   - Confirms balanced learning, not memorization
