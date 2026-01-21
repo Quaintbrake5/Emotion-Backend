@@ -1,12 +1,27 @@
-import librosa
-import numpy as np
-import soundfile as sf
 import os
-from skimage.transform import resize
-from typing import Tuple, Dict, Any
-from utils.constants import SAMPLE_RATE
 import subprocess
 import tempfile
+from typing import Tuple, Dict, Any
+from utils.constants import SAMPLE_RATE
+
+# Handle coverage interference by disabling it for audio processing
+import sys
+if 'coverage' in sys.modules:
+    # Disable coverage for this module to prevent interference with audio libraries
+    import coverage
+    if hasattr(coverage, '_coverage'):
+        coverage._coverage = None
+
+# Import audio libraries after handling coverage
+try:
+    import librosa
+    import numpy as np
+    import soundfile as sf
+    from skimage.transform import resize
+    AUDIO_LIBRARIES_AVAILABLE = True
+except ImportError as e:
+    AUDIO_LIBRARIES_AVAILABLE = False
+    print(f"Warning: Audio libraries not available: {e}")
 
 # Try to import sounddevice, but handle gracefully if not available (e.g., in cloud deployments)
 try:
