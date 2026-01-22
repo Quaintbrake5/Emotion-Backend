@@ -4,13 +4,27 @@ import tempfile
 from typing import Tuple, Dict, Any
 from utils.constants import SAMPLE_RATE
 
+# Disable coverage for this module to prevent interference with audio libraries
+os.environ['COVERAGE_PROCESS_START'] = ''
+
 # Handle coverage interference by disabling it for audio processing
 import sys
 if 'coverage' in sys.modules:
-    # Disable coverage for this module to prevent interference with audio libraries
-    import coverage
-    if hasattr(coverage, '_coverage'):
-        coverage._coverage = None
+    try:
+        import coverage
+        # Try to stop and disable coverage
+        if hasattr(coverage, 'coverage') and coverage.coverage is not None:
+            coverage.coverage.stop()
+            coverage.coverage.save()
+            coverage.coverage.erase()
+            coverage.coverage = None
+        # Remove coverage from sys.modules to prevent further interference
+        modules_to_remove = ['coverage', 'coverage.types', 'coverage.tracer', 'coverage.collector', 'coverage.control']
+        for mod in modules_to_remove:
+            if mod in sys.modules:
+                del sys.modules[mod]
+    except Exception as e:
+        print(f"Warning: Could not disable coverage: {e}")
 
 # Import audio libraries after handling coverage
 try:
