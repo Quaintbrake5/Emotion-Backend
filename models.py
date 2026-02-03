@@ -2,7 +2,7 @@ import json
 from sqlalchemy import Column, Integer, String, DateTime, Float, Text, Boolean, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from enums import Emotion, ModelType
 
 Base = declarative_base()
@@ -79,7 +79,7 @@ class AudioFile(Base):
     file_path = Column(String(500), nullable=False)
     duration = Column(Float, nullable=True)
     sample_rate = Column(Integer, nullable=True)
-    uploaded_at = Column(DateTime, default=datetime.now(datetime.timezone.utc))
+    uploaded_at = Column(DateTime, default=datetime.now(timezone.utc))
 
     # Relationships
     user = relationship("User")
