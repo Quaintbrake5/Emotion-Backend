@@ -9,6 +9,10 @@ os.environ['COVERAGE_PROCESS_START'] = ''
 
 # Handle coverage interference by disabling it for audio processing
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
+
 if 'coverage' in sys.modules:
     try:
         import coverage
@@ -24,7 +28,7 @@ if 'coverage' in sys.modules:
             if mod in sys.modules:
                 del sys.modules[mod]
     except Exception as e:
-        print(f"Warning: Could not disable coverage: {e}")
+        logger.warning(f"Could not disable coverage: {e}")
 
 # Import audio libraries after handling coverage
 try:
@@ -175,12 +179,13 @@ def _is_webm_file(file_path: str) -> bool:
             header = f.read(16)
             # WebM files start with specific bytes
             return header.startswith(b'\x1a\x45\xdf\xa3')
-    except:
+    except Exception:
         return False
 
 def _convert_webm_to_wav(input_path: str) -> str:
     """Convert WebM file to WAV using ffmpeg."""
-    output_path = tempfile.mktemp(suffix='.wav')
+    output_fd, output_path = tempfile.mkstemp(suffix='.wav')
+    os.close(output_fd)
 
     try:
         # Use ffmpeg to convert WebM to WAV
@@ -197,14 +202,14 @@ def _convert_webm_to_wav(input_path: str) -> str:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
         if result.returncode != 0:
-            raise Exception(f"FFmpeg conversion failed: {result.stderr}")
+            raise RuntimeError(f"FFmpeg conversion failed: {result.stderr}")
 
         print(f"Successfully converted WebM to WAV: {input_path} -> {output_path}")
         return output_path
 
     except subprocess.TimeoutExpired:
-        raise Exception("Audio conversion timed out")
+        raise TimeoutError("Audio conversion timed out")
     except FileNotFoundError:
-        raise Exception("FFmpeg not found. Please install ffmpeg to handle WebM files")
+        raise FileNotFoundError("FFmpeg not found. Please install ffmpeg to handle WebM files")
     except Exception as e:
-        raise Exception(f"Failed to convert WebM to WAV: {str(e)}")
+        raise RuntimeError(f"Failed to convert WebM to WAV: {str(e)}")

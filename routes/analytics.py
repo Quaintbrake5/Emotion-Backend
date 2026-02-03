@@ -9,6 +9,9 @@ import logging
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+# Constants
+INTERNAL_SERVER_ERROR = "Internal server error"
+
 @router.get("/system/stats", response_model=dict)
 async def get_system_statistics(
     current_user: User = Depends(require_admin),
@@ -24,7 +27,7 @@ async def get_system_statistics(
         return stats
     except Exception as e:
         logger.error(f"Failed to retrieve system statistics for admin {current_user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail= INTERNAL_SERVER_ERROR)
 
 @router.get("/system/metrics", response_model=dict)
 async def get_system_metrics(
@@ -41,7 +44,7 @@ async def get_system_metrics(
         return metrics
     except Exception as e:
         logger.error(f"Failed to retrieve system metrics for admin {current_user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail= INTERNAL_SERVER_ERROR)
 
 @router.get("/users/{user_id}/activity", response_model=list[dict])
 async def get_user_activity_history(
@@ -61,7 +64,7 @@ async def get_user_activity_history(
         return activities
     except Exception as e:
         logger.error(f"Failed to retrieve activity history for user {user_id} by admin {current_user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail= INTERNAL_SERVER_ERROR)
 
 @router.get("/predictions/analytics", response_model=dict)
 async def get_prediction_analytics_overview(
@@ -78,7 +81,7 @@ async def get_prediction_analytics_overview(
         return analytics
     except Exception as e:
         logger.error(f"Failed to retrieve prediction analytics overview for admin {current_user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail= INTERNAL_SERVER_ERROR)
 
 @router.get("/users/activity/summary", response_model=dict)
 async def get_user_activity_summary(
@@ -95,7 +98,7 @@ async def get_user_activity_summary(
         return summary
     except Exception as e:
         logger.error(f"Failed to retrieve user activity summary for admin {current_user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail= INTERNAL_SERVER_ERROR)
 
 @router.delete("/data/cleanup", response_model=dict)
 async def cleanup_old_data(
@@ -113,7 +116,7 @@ async def cleanup_old_data(
         return result
     except Exception as e:
         logger.error(f"Failed to perform data cleanup for admin {current_user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail= INTERNAL_SERVER_ERROR)
 
 @router.get("/system/health", response_model=dict)
 async def get_system_health(
@@ -130,4 +133,4 @@ async def get_system_health(
         return health
     except Exception as e:
         logger.error(f"Failed to retrieve system health for admin {current_user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail= INTERNAL_SERVER_ERROR)

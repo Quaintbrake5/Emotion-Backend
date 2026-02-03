@@ -7,6 +7,10 @@ from enums import Emotion, ModelType
 
 Base = declarative_base()
 
+# Constants for foreign keys
+USER_ID_FOREIGN_KEY = "users.id"
+PREDICTION_ID_FOREIGN_KEY = "predictions.id"
+
 class User(Base):
     __tablename__ = "users"
 
@@ -42,7 +46,7 @@ class Prediction(Base):
     __tablename__ = "predictions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey(USER_ID_FOREIGN_KEY), nullable=False)
     filename = Column(String(255), nullable=False)
     emotion = Column(Text, nullable=False)  # JSON string of emotion probabilities
     confidence = Column(Float, nullable=True)
@@ -70,12 +74,12 @@ class AudioFile(Base):
     __tablename__ = "audio_files"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey(USER_ID_FOREIGN_KEY), nullable=False)
     filename = Column(String(255), nullable=False, unique=True)
     file_path = Column(String(500), nullable=False)
     duration = Column(Float, nullable=True)
     sample_rate = Column(Integer, nullable=True)
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    uploaded_at = Column(DateTime, default=datetime.now(datetime.timezone.utc))
 
     # Relationships
     user = relationship("User")
@@ -87,7 +91,7 @@ class UserActivity(Base):
     __tablename__ = "user_activities"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey(USER_ID_FOREIGN_KEY), nullable=False)
     action = Column(String(100), nullable=False)  # login, prediction, upload, etc.
     details = Column(Text, nullable=True)  # JSON string with additional details
     ip_address = Column(String(45), nullable=True)  # IPv4/IPv6 support
@@ -104,7 +108,7 @@ class UserStatistics(Base):
     __tablename__ = "user_statistics"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    user_id = Column(Integer, ForeignKey(USER_ID_FOREIGN_KEY), nullable=False, unique=True)
     total_predictions = Column(Integer, default=0)
     total_uploads = Column(Integer, default=0)
     total_logins = Column(Integer, default=0)
@@ -124,7 +128,7 @@ class PredictionAnalytics(Base):
     __tablename__ = "prediction_analytics"
 
     id = Column(Integer, primary_key=True, index=True)
-    prediction_id = Column(Integer, ForeignKey("predictions.id"), nullable=False)
+    prediction_id = Column(Integer, ForeignKey(PREDICTION_ID_FOREIGN_KEY), nullable=False)
     model_version = Column(String(50), nullable=True)
     processing_time = Column(Float, nullable=True)  # in seconds
     feature_extraction_time = Column(Float, nullable=True)

@@ -11,10 +11,14 @@ from datetime import datetime
 import logging
 import shutil
 import os
+import aiofiles
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# Constants
+EMPTY_FILE_UPLOADED = "Empty file uploaded"
 
 @router.post("/record-voice", response_model=VoiceRecordingResponse)
 async def record_and_predict_emotion(
@@ -110,13 +114,13 @@ async def predict_emotion(
             raise HTTPException(status_code=400, detail="File too large. Maximum size is 50MB")
 
         if file_size == 0:
-            logger.error("Empty file uploaded")
-            raise HTTPException(status_code=400, detail="Empty file uploaded")
+            logger.error(EMPTY_FILE_UPLOADED)
+            raise HTTPException(status_code=400, detail=EMPTY_FILE_UPLOADED)
 
         # Save temporary file
         temp_path = f"temp_{audio.filename}"
-        with open(temp_path, "wb") as buffer:
-            buffer.write(content)
+        async with aiofiles.open(temp_path, "wb") as buffer:
+            await buffer.write(content)
 
         # Verify file was saved correctly
         if not os.path.exists(temp_path):
@@ -176,7 +180,7 @@ async def get_waveform_data(
 
         if not audio.filename:
             logger.error("No filename provided")
-            raise HTTPException(status_code=400, detail="No file uploaded")
+            raise HTTPException(status_code=400, detail=EMPTY_FILE_UPLOADED)
 
         # Validate file extension
         allowed_extensions = ['.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aac', '.webm']
@@ -200,12 +204,12 @@ async def get_waveform_data(
 
         if file_size == 0:
             logger.error("Empty file uploaded")
-            raise HTTPException(status_code=400, detail="Empty file uploaded")
+            raise HTTPException(status_code=400, detail= EMPTY_FILE_UPLOADED)
 
         # Save temporary file
         temp_path = f"temp_waveform_{audio.filename}"
-        with open(temp_path, "wb") as buffer:
-            buffer.write(content)
+        async with aiofiles.open(temp_path, "wb") as buffer:
+            await buffer.write(content)
 
         # Verify file was saved correctly
         if not os.path.exists(temp_path):

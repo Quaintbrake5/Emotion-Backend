@@ -2,12 +2,16 @@ import csv
 import json
 import io
 from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi.responses import StreamingResponse
 from database_mongo import MongoDB, PREDICTIONS_COLLECTION, ANALYTICS_COLLECTION
 import logging
 
 logger = logging.getLogger(__name__)
+
+CSV_MEDIA_TYPE = "text/csv"
+TOTAL_PREDICTIONS = "Total Predictions"
+AVG_CONFIDENCE = "Avg Confidence"
 
 async def export_predictions_csv(
     user_id: Optional[str] = None,
@@ -19,7 +23,7 @@ async def export_predictions_csv(
     db = MongoDB.get_database()
 
     # Build query
-    query = {"created_at": {"$gte": datetime.utcnow() - timedelta(days=days)}}
+    query = {"created_at": {"$gte": datetime.now(datetime.timezone.utc) - timedelta(days=days)}}
     if user_id:
         query["user_id"] = user_id
     if emotion:
@@ -76,7 +80,7 @@ async def export_predictions_csv(
     filename = f"predictions_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     return StreamingResponse(
         generate(),
-        media_type="text/csv",
+        media_type=CSV_MEDIA_TYPE,
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
@@ -90,7 +94,7 @@ async def export_predictions_json(
     db = MongoDB.get_database()
 
     # Build query
-    query = {"created_at": {"$gte": datetime.utcnow() - timedelta(days=days)}}
+    query = {"created_at": {"$gte": datetime.now(datetime.timezone.utc) - timedelta(days=days)}}
     if user_id:
         query["user_id"] = user_id
     if emotion:
@@ -126,7 +130,7 @@ async def export_predictions_json(
     # Create JSON content
     json_data = {
         "export_info": {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(datetime.timezone.utc).isoformat(),
             "total_records": len(export_data),
             "filters": {
                 "user_id": user_id,
@@ -163,7 +167,7 @@ async def export_analytics_csv(days: int = 30) -> StreamingResponse:
     # Write model performance section
     writer.writerow(["MODEL PERFORMANCE ANALYTICS"])
     writer.writerow([])
-    writer.writerow(["Model Version", "Total Predictions", "Avg Confidence", "Avg Processing Time",
+    writer.writerow(["Model Version", TOTAL_PREDICTIONS, AVG_CONFIDENCE, "Avg Processing Time",
                     "High Confidence Ratio", "Low Confidence Ratio", "Performance Score"])
 
     for model_version, metrics in model_performance["model_performance"].items():
@@ -180,7 +184,7 @@ async def export_analytics_csv(days: int = 30) -> StreamingResponse:
     writer.writerow([])
     writer.writerow(["DAILY TRENDS"])
     writer.writerow([])
-    writer.writerow(["Date", "Predictions", "Avg Confidence", "Avg Processing Time", "High Confidence Ratio"])
+    writer.writerow(["Date", "Predictions", AVG_CONFIDENCE, "Avg Processing Time", "High Confidence Ratio"])
 
     for date, trends in model_performance["daily_trends"].items():
         writer.writerow([
@@ -217,7 +221,7 @@ async def export_analytics_csv(days: int = 30) -> StreamingResponse:
     filename = f"analytics_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     return StreamingResponse(
         generate(),
-        media_type="text/csv",
+        media_type=CSV_MEDIA_TYPE,
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
@@ -234,7 +238,7 @@ async def export_user_insights_csv(user_id: str) -> StreamingResponse:
     writer.writerow(["USER INSIGHTS REPORT"])
     writer.writerow([])
     writer.writerow(["User ID", insights["user_id"]])
-    writer.writerow(["Total Predictions", insights["total_predictions"]])
+    writer.writerow([TOTAL_PREDICTIONS, insights["total_predictions"]])
     writer.writerow(["Average Confidence", f"{insights['avg_confidence']:.3f}"])
     writer.writerow(["Most Common Emotion", insights["most_common_emotion"] or "N/A"])
     writer.writerow(["Prediction Streak", insights["prediction_streak"]])
@@ -247,7 +251,7 @@ async def export_user_insights_csv(user_id: str) -> StreamingResponse:
     writer.writerow([])
     writer.writerow(["WEEKLY ACTIVITY"])
     writer.writerow([])
-    writer.writerow(["Date", "Predictions", "Avg Confidence"])
+    writer.writerow(["Date", "Predictions", AVG_CONFIDENCE])
 
     for date, activity in insights["weekly_activity"].items():
         writer.writerow([
@@ -272,6 +276,6 @@ async def export_user_insights_csv(user_id: str) -> StreamingResponse:
     filename = f"user_insights_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     return StreamingResponse(
         generate(),
-        media_type="text/csv",
+        media_type=CSV_MEDIA_TYPE,
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )

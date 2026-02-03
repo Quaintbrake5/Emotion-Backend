@@ -12,14 +12,18 @@ from services.visualization_service import (
     get_system_overview_metrics
 )
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+# Constants
+NUMBER_OF_DAYS_TO_ANALYZE = "Number of days to analyze"
+
 @router.get("/user/prediction-trends")
 async def get_user_prediction_trends_endpoint(
     request: Request,
-    days: int = Query(30, description="Number of days to analyze", ge=1, le=365),
+    days: int = Query(30, description=NUMBER_OF_DAYS_TO_ANALYZE, ge=1, le=365),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -36,7 +40,7 @@ async def get_user_prediction_trends_endpoint(
 @router.get("/user/emotion-distribution")
 async def get_user_emotion_distribution_endpoint(
     request: Request,
-    days: int = Query(30, description="Number of days to analyze", ge=1, le=365),
+    days: int = Query(30, description=NUMBER_OF_DAYS_TO_ANALYZE, ge=1, le=365),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -69,7 +73,7 @@ async def get_user_engagement_metrics_endpoint(
 @router.get("/admin/model-performance")
 async def get_model_performance_comparison_endpoint(
     request: Request,
-    days: int = Query(30, description="Number of days to analyze", ge=1, le=365),
+    days: int = Query(30, description=NUMBER_OF_DAYS_TO_ANALYZE, ge=1, le=365),
     current_user: User = Depends(require_admin)
 ):
     """
@@ -86,7 +90,7 @@ async def get_model_performance_comparison_endpoint(
 @router.get("/admin/emotion-distribution")
 async def get_system_emotion_distribution_endpoint(
     request: Request,
-    days: int = Query(30, description="Number of days to analyze", ge=1, le=365),
+    days: int = Query(30, description=NUMBER_OF_DAYS_TO_ANALYZE, ge=1, le=365),
     current_user: User = Depends(require_admin)
 ):
     """
@@ -103,7 +107,7 @@ async def get_system_emotion_distribution_endpoint(
 @router.get("/admin/daily-activity-heatmap")
 async def get_daily_activity_heatmap_endpoint(
     request: Request,
-    days: int = Query(30, description="Number of days to analyze", ge=1, le=365),
+    days: int = Query(30, description=NUMBER_OF_DAYS_TO_ANALYZE, ge=1, le=365),
     current_user: User = Depends(require_admin)
 ):
     """
@@ -120,7 +124,7 @@ async def get_daily_activity_heatmap_endpoint(
 @router.get("/admin/system-overview")
 async def get_system_overview_metrics_endpoint(
     request: Request,
-    days: int = Query(7, description="Number of days to analyze", ge=1, le=90),
+    days: int = Query(7, description=NUMBER_OF_DAYS_TO_ANALYZE, ge=1, le=90),
     current_user: User = Depends(require_admin)
 ):
     """
@@ -137,7 +141,7 @@ async def get_system_overview_metrics_endpoint(
 @router.get("/public/emotion-distribution")
 async def get_public_emotion_distribution_endpoint(
     request: Request,
-    days: int = Query(7, description="Number of days to analyze", ge=1, le=30)
+    days: int = Query(7, description=NUMBER_OF_DAYS_TO_ANALYZE, ge=1, le=30)
 ):
     """
     Get public emotion distribution (limited to recent data, no auth required).
@@ -153,7 +157,7 @@ async def get_public_emotion_distribution_endpoint(
 @router.get("/user/combined-dashboard")
 async def get_user_combined_dashboard_endpoint(
     request: Request,
-    days: int = Query(30, description="Number of days to analyze", ge=1, le=365),
+    days: int = Query(30, description=NUMBER_OF_DAYS_TO_ANALYZE, ge=1, le=365),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -177,7 +181,7 @@ async def get_user_combined_dashboard_endpoint(
                 "emotion_distribution": emotion_data,
                 "engagement_metrics": engagement_data
             },
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(datetime.timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Combined dashboard failed for user {current_user.username}: {str(e)}")
@@ -186,7 +190,7 @@ async def get_user_combined_dashboard_endpoint(
 @router.get("/admin/combined-dashboard")
 async def get_admin_combined_dashboard_endpoint(
     request: Request,
-    days: int = Query(30, description="Number of days to analyze", ge=1, le=365),
+    days: int = Query(30, description=NUMBER_OF_DAYS_TO_ANALYZE, ge=1, le=365),
     current_user: User = Depends(require_admin)
 ):
     """
@@ -210,7 +214,7 @@ async def get_admin_combined_dashboard_endpoint(
                 "system_overview": system_overview,
                 "activity_heatmap": activity_heatmap
             },
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(datetime.timezone.utc).isoformat()
         }
     except Exception as e:
         logger.error(f"Combined admin dashboard failed for admin {current_user.username}: {str(e)}")

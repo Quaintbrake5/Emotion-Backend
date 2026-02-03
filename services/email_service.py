@@ -5,7 +5,7 @@ from typing import Optional
 import logging
 import os
 from jose import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -16,15 +16,15 @@ class EmailService:
         self.sender_email = os.getenv("SENDER_EMAIL", "noreply@emotionrecognition.com")
         self.sender_password = os.getenv("SENDER_PASSWORD", "")
         self.jwt_secret = os.getenv("JWT_SECRET", "your-secret-key")
-        self.base_url = os.getenv("BASE_URL", "http://localhost:8000")
+        self.base_url = os.getenv("BASE_URL", "http://localhost:8001")
 
     def _create_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """Create a JWT token for email verification/password reset"""
         to_encode = data.copy()
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(hours=24)  # 24 hours default
+            expire = datetime.now(timezone.utc) + timedelta(hours=24)  # 24 hours default
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, self.jwt_secret, algorithm="HS256")
         return encoded_jwt

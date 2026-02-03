@@ -64,12 +64,12 @@ async def delete_user(
         audio_files = db.query(AudioFile).filter(AudioFile.user_id == user_id).all()
 
         # Delete associated files from filesystem (placeholder for actual file deletion)
-        for prediction in predictions:
+        for _ in predictions:
             # Note: In a real implementation, you'd delete the actual audio files here
             # For now, we'll just delete the database records
             pass
 
-        for audio_file in audio_files:
+        for _ in audio_files:
             # Note: In a real implementation, you'd delete the actual audio files here
             # For now, we'll just delete the database records
             pass

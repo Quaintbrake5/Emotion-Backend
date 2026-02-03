@@ -5,6 +5,50 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Constants for chart configuration
+CHART_TYPE_LINE = "line"
+TITLE_PREDICTION_TRENDS = "Prediction Trends Over Time"
+LABEL_PREDICTIONS = "Predictions"
+LABEL_AVG_CONFIDENCE = "Avg Confidence"
+BORDER_COLOR_PREDICTIONS = "rgb(75, 192, 192)"
+BACKGROUND_COLOR_PREDICTIONS = "rgba(75, 192, 192, 0.2)"
+BORDER_COLOR_CONFIDENCE = "rgb(255, 99, 132)"
+BACKGROUND_COLOR_CONFIDENCE = "rgba(255, 99, 132, 0.2)"
+Y_AXIS_ID_Y = "y"
+Y_AXIS_ID_Y1 = "y1"
+TEXT_NUM_PREDICTIONS = "Number of Predictions"
+TEXT_CONFIDENCE_SCORE = "Confidence Score"
+AXIS_TYPE_LINEAR = "linear"
+AXIS_POSITION_LEFT = "left"
+AXIS_POSITION_RIGHT = "right"
+
+# MongoDB aggregation pipeline operators
+PIPELINE_MATCH = "$match"
+PIPELINE_GROUP = "$group"
+PIPELINE_SORT = "$sort"
+PIPELINE_PROJECT = "$project"
+PIPELINE_DATE = "$dateToString"
+PIPELINE_HOUR = "$hour"
+PIPELINE_SUM = "$sum"
+PIPELINE_AVG = "$avg"
+PIPELINE_MIN = "$min"
+PIPELINE_MAX = "$max"
+PIPELINE_ADD_TO_SET = "$addToSet"
+PIPELINE_PUSH = "$push"
+PIPELINE_ROUND = "$round"
+PIPELINE_DIVIDE = "$divide"
+PIPELINE_COND = "$cond"
+PIPELINE_GTE = "$gte"
+
+# Field references
+CREATED_AT = "$created_at"
+CONFIDENCE = "$confidence"
+EMOTION = "$emotion"
+MODEL_VERSION = "$model_version"
+PROCESSING_TIME = "$processing_time"
+USER_ID = "$user_id"
+
+
 async def get_user_prediction_trends(
     user_id: str,
     days: int = 30
@@ -15,26 +59,26 @@ async def get_user_prediction_trends(
     # Aggregate predictions by date
     pipeline = [
         {
-            "$match": {
+            PIPELINE_MATCH: {
                 "user_id": user_id,
-                "created_at": {"$gte": datetime.utcnow() - timedelta(days=days)}
+                CREATED_AT: {PIPELINE_GTE: datetime.now(datetime.timezone.utc) - timedelta(days=days)}
             }
         },
         {
-            "$group": {
+            PIPELINE_GROUP: {
                 "_id": {
-                    "$dateToString": {
+                    PIPELINE_DATE: {
                         "format": "%Y-%m-%d",
-                        "date": "$created_at"
+                        "date": CREATED_AT
                     }
                 },
-                "predictions": {"$sum": 1},
-                "avg_confidence": {"$avg": "$confidence"},
-                "emotions": {"$push": "$emotion"}
+                "predictions": {PIPELINE_SUM: 1},
+                "avg_confidence": {PIPELINE_AVG: CONFIDENCE},
+                "emotions": {PIPELINE_PUSH: EMOTION}
             }
         },
         {
-            "$sort": {"_id": 1}
+            PIPELINE_SORT: {"_id": 1}
         }
     ]
 
@@ -56,45 +100,45 @@ async def get_user_prediction_trends(
             emotion_distribution[emotion] = emotion_distribution.get(emotion, 0) + 1
 
     return {
-        "chart_type": "line",
-        "title": "Prediction Trends Over Time",
+        "chart_type": CHART_TYPE_LINE,
+        "title": TITLE_PREDICTION_TRENDS,
         "data": {
             "labels": dates,
             "datasets": [
                 {
-                    "label": "Predictions",
+                    "label": LABEL_PREDICTIONS,
                     "data": prediction_counts,
-                    "borderColor": "rgb(75, 192, 192)",
-                    "backgroundColor": "rgba(75, 192, 192, 0.2)",
-                    "yAxisID": "y"
+                    "borderColor": BORDER_COLOR_PREDICTIONS,
+                    "backgroundColor": BACKGROUND_COLOR_PREDICTIONS,
+                    "yAxisID": Y_AXIS_ID_Y
                 },
                 {
-                    "label": "Avg Confidence",
+                    "label": LABEL_AVG_CONFIDENCE,
                     "data": confidence_scores,
-                    "borderColor": "rgb(255, 99, 132)",
-                    "backgroundColor": "rgba(255, 99, 132, 0.2)",
-                    "yAxisID": "y1"
+                    "borderColor": BORDER_COLOR_CONFIDENCE,
+                    "backgroundColor": BACKGROUND_COLOR_CONFIDENCE,
+                    "yAxisID": Y_AXIS_ID_Y1
                 }
             ]
         },
         "options": {
             "scales": {
                 "y": {
-                    "type": "linear",
+                    "type": AXIS_TYPE_LINEAR,
                     "display": True,
-                    "position": "left",
+                    "position": AXIS_POSITION_LEFT,
                     "title": {
                         "display": True,
-                        "text": "Number of Predictions"
+                        "text": TEXT_NUM_PREDICTIONS
                     }
                 },
                 "y1": {
-                    "type": "linear",
+                    "type": AXIS_TYPE_LINEAR,
                     "display": True,
-                    "position": "right",
+                    "position": AXIS_POSITION_RIGHT,
                     "title": {
                         "display": True,
-                        "text": "Confidence Score"
+                        "text": TEXT_CONFIDENCE_SCORE
                     },
                     "min": 0,
                     "max": 1
@@ -108,20 +152,20 @@ async def get_emotion_distribution(user_id: Optional[str] = None, days: int = 30
     db = MongoDB.get_database()
 
     # Build match query
-    match_query = {"created_at": {"$gte": datetime.utcnow() - timedelta(days=days)}}
+    match_query = {CREATED_AT: {PIPELINE_GTE: datetime.now(datetime.timezone.utc) - timedelta(days=days)}}
     if user_id:
         match_query["user_id"] = user_id
 
     pipeline = [
-        {"$match": match_query},
+        {PIPELINE_MATCH: match_query},
         {
-            "$group": {
-                "_id": "$emotion",
-                "count": {"$sum": 1},
-                "avg_confidence": {"$avg": "$confidence"}
+            PIPELINE_GROUP: {
+                "_id": EMOTION,
+                "count": {PIPELINE_SUM: 1},
+                "avg_confidence": {PIPELINE_AVG: CONFIDENCE}
             }
         },
-        {"$sort": {"count": -1}}
+        {PIPELINE_SORT: {"count": -1}}
     ]
 
     results = await db[PREDICTIONS_COLLECTION].aggregate(pipeline).to_list(length=None)
@@ -172,33 +216,33 @@ async def get_model_performance_comparison(days: int = 30) -> Dict[str, Any]:
 
     pipeline = [
         {
-            "$match": {
-                "created_at": {"$gte": datetime.utcnow() - timedelta(days=days)}
+            PIPELINE_MATCH: {
+                CREATED_AT: {PIPELINE_GTE: datetime.now(datetime.timezone.utc) - timedelta(days=days)}
             }
         },
         {
-            "$group": {
-                "_id": "$model_version",
-                "total_predictions": {"$sum": 1},
-                "avg_confidence": {"$avg": "$confidence"},
-                "avg_processing_time": {"$avg": "$processing_time"},
+            PIPELINE_GROUP: {
+                "_id": MODEL_VERSION,
+                "total_predictions": {PIPELINE_SUM: 1},
+                "avg_confidence": {PIPELINE_AVG: CONFIDENCE},
+                "avg_processing_time": {PIPELINE_AVG: PROCESSING_TIME},
                 "high_confidence_count": {
-                    "$sum": {"$cond": [{"$gte": ["$confidence", 0.8]}, 1, 0]}
+                    PIPELINE_SUM: {PIPELINE_COND: [{PIPELINE_GTE: [CONFIDENCE, 0.8]}, 1, 0]}
                 }
             }
         },
         {
-            "$project": {
+            PIPELINE_PROJECT: {
                 "model_version": "$_id",
                 "total_predictions": 1,
-                "avg_confidence": {"$round": ["$avg_confidence", 3]},
-                "avg_processing_time": {"$round": ["$avg_processing_time", 3]},
+                "avg_confidence": {PIPELINE_ROUND: ["$avg_confidence", 3]},
+                "avg_processing_time": {PIPELINE_ROUND: ["$avg_processing_time", 3]},
                 "high_confidence_ratio": {
-                    "$round": [{"$divide": ["$high_confidence_count", "$total_predictions"]}, 3]
+                    PIPELINE_ROUND: [{PIPELINE_DIVIDE: ["$high_confidence_count", "$total_predictions"]}, 3]
                 }
             }
         },
-        {"$sort": {"avg_confidence": -1}}
+        {PIPELINE_SORT: {"avg_confidence": -1}}
     ]
 
     results = await db[PREDICTIONS_COLLECTION].aggregate(pipeline).to_list(length=None)
@@ -258,28 +302,28 @@ async def get_daily_activity_heatmap(days: int = 30) -> Dict[str, Any]:
 
     pipeline = [
         {
-            "$match": {
-                "created_at": {"$gte": datetime.utcnow() - timedelta(days=days)}
+            PIPELINE_MATCH: {
+                CREATED_AT: {PIPELINE_GTE: datetime.now(datetime.timezone.utc) - timedelta(days=days)}
             }
         },
         {
-            "$group": {
+            PIPELINE_GROUP: {
                 "_id": {
                     "date": {
-                        "$dateToString": {
+                        PIPELINE_DATE: {
                             "format": "%Y-%m-%d",
-                            "date": "$created_at"
+                            "date": CREATED_AT
                         }
                     },
                     "hour": {
-                        "$hour": "$created_at"
+                        PIPELINE_HOUR: CREATED_AT
                     }
                 },
-                "count": {"$sum": 1}
+                "count": {PIPELINE_SUM: 1}
             }
         },
         {
-            "$sort": {"_id.date": 1, "_id.hour": 1}
+            PIPELINE_SORT: {"_id.date": 1, "_id.hour": 1}
         }
     ]
 
@@ -288,7 +332,7 @@ async def get_daily_activity_heatmap(days: int = 30) -> Dict[str, Any]:
     # Create heatmap data structure
     heatmap_data = []
     hours = list(range(24))
-    dates = sorted(list(set(r["_id"]["date"] for r in results)))
+    dates = sorted({r["_id"]["date"] for r in results})
 
     for date in dates:
         day_data = [0] * 24
@@ -350,16 +394,16 @@ async def get_user_engagement_metrics(user_id: str) -> Dict[str, Any]:
 
     # Get user's prediction stats
     pipeline = [
-        {"$match": {"user_id": user_id}},
+        {PIPELINE_MATCH: {"user_id": user_id}},
         {
-            "$group": {
+            PIPELINE_GROUP: {
                 "_id": None,
-                "total_predictions": {"$sum": 1},
-                "avg_confidence": {"$avg": "$confidence"},
-                "first_prediction": {"$min": "$created_at"},
-                "last_prediction": {"$max": "$created_at"},
-                "unique_emotions": {"$addToSet": "$emotion"},
-                "emotions": {"$push": "$emotion"}
+                "total_predictions": {PIPELINE_SUM: 1},
+                "avg_confidence": {PIPELINE_AVG: CONFIDENCE},
+                "first_prediction": {PIPELINE_MIN: CREATED_AT},
+                "last_prediction": {PIPELINE_MAX: CREATED_AT},
+                "unique_emotions": {PIPELINE_ADD_TO_SET: EMOTION},
+                "emotions": {PIPELINE_PUSH: EMOTION}
             }
         }
     ]
@@ -387,26 +431,26 @@ async def get_user_engagement_metrics(user_id: str) -> Dict[str, Any]:
 
     # Calculate prediction streak (consecutive days)
     streak_pipeline = [
-        {"$match": {"user_id": user_id}},
+        {PIPELINE_MATCH: {"user_id": user_id}},
         {
-            "$group": {
+            PIPELINE_GROUP: {
                 "_id": {
-                    "$dateToString": {
+                    PIPELINE_DATE: {
                         "format": "%Y-%m-%d",
-                        "date": "$created_at"
+                        "date": CREATED_AT
                     }
                 },
-                "count": {"$sum": 1}
+                "count": {PIPELINE_SUM: 1}
             }
         },
-        {"$sort": {"_id": -1}}
+        {PIPELINE_SORT: {"_id": -1}}
     ]
 
     daily_predictions = await db[PREDICTIONS_COLLECTION].aggregate(streak_pipeline).to_list(length=None)
 
     # Calculate streak
     streak = 0
-    current_date = datetime.utcnow().date()
+    current_date = datetime.now(datetime.timezone.utc).date()
 
     for day_data in daily_predictions:
         day = datetime.strptime(day_data["_id"], "%Y-%m-%d").date()
@@ -445,17 +489,17 @@ async def get_system_overview_metrics(days: int = 7) -> Dict[str, Any]:
     # Get recent activity
     recent_pipeline = [
         {
-            "$match": {
-                "created_at": {"$gte": datetime.utcnow() - timedelta(days=days)}
+            PIPELINE_MATCH: {
+                CREATED_AT: {PIPELINE_GTE: datetime.now(datetime.timezone.utc) - timedelta(days=days)}
             }
         },
         {
-            "$group": {
+            PIPELINE_GROUP: {
                 "_id": None,
-                "total_predictions": {"$sum": 1},
-                "unique_users": {"$addToSet": "$user_id"},
-                "avg_confidence": {"$avg": "$confidence"},
-                "emotions": {"$push": "$emotion"}
+                "total_predictions": {PIPELINE_SUM: 1},
+                "unique_users": {PIPELINE_ADD_TO_SET: USER_ID},
+                "avg_confidence": {PIPELINE_AVG: CONFIDENCE},
+                "emotions": {PIPELINE_PUSH: EMOTION}
             }
         }
     ]
@@ -484,22 +528,22 @@ async def get_system_overview_metrics(days: int = 7) -> Dict[str, Any]:
     # Get daily trend for the period
     trend_pipeline = [
         {
-            "$match": {
-                "created_at": {"$gte": datetime.utcnow() - timedelta(days=days)}
+            PIPELINE_MATCH: {
+                CREATED_AT: {PIPELINE_GTE: datetime.now(datetime.timezone.utc) - timedelta(days=days)}
             }
         },
         {
-            "$group": {
+            PIPELINE_GROUP: {
                 "_id": {
-                    "$dateToString": {
+                    PIPELINE_DATE: {
                         "format": "%Y-%m-%d",
-                        "date": "$created_at"
+                        "date": CREATED_AT
                     }
                 },
-                "count": {"$sum": 1}
+                "count": {PIPELINE_SUM: 1}
             }
         },
-        {"$sort": {"_id": 1}}
+        {PIPELINE_SORT: {"_id": 1}}
     ]
 
     trend_data = await db[PREDICTIONS_COLLECTION].aggregate(trend_pipeline).to_list(length=None)

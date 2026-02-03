@@ -60,7 +60,7 @@ async def save_prediction_to_mongo(
         "features": features or {},
         "model_version": model_version,
         "processing_time": None,  # Will be set after processing
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(datetime.timezone.utc)
     }
 
     result = await db[PREDICTIONS_COLLECTION].insert_one(prediction_doc)

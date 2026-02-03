@@ -53,8 +53,7 @@ httpx==0.24.1        # for making HTTP requests in tests
 pytest-cov==4.1.0    # for test coverage reports
 coverage==7.3.3      # for measuring code coverage
 flake8==6.1.0        # for code linting
-
-
+aiofiles==23.2.1
 
 # For more clarification on the versions, here are the versions used during development:
 # absl-py==2.3.1
