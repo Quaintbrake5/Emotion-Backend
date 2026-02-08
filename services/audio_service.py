@@ -14,18 +14,89 @@ import logging
 logger = logging.getLogger(__name__)
 
 class MockCoverage:
-    def __init__(self):
+    """
+    Mock implementation of the coverage module to prevent interference with audio libraries.
+    
+    This class is used as a workaround for coverage process start issues that can interfere
+    with the initialization of audio processing libraries (librosa, numpy, soundfile, etc.).
+    When coverage is active, it can cause conflicts with C extensions used by these libraries.
+    
+    The mock works by:
+    1. Being injected into sys.modules for coverage-related modules
+    2. Returning MockCoverage instances for any attribute access, enabling method chaining
+    3. Providing no-op implementations for common coverage methods (start, stop, save, erase)
+    4. Supporting callable, context manager, and boolean usage patterns
+    
+    Example usage:
+        sys.modules['coverage'] = MockCoverage()
+        # Now any import or usage of coverage will use this mock
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the MockCoverage instance."""
         pass
-    def stop(self):
+    
+    def stop(self) -> None:
+        """Mock implementation of coverage.stop(). Does nothing."""
         pass
-    def save(self):
+    
+    def save(self) -> None:
+        """Mock implementation of coverage.save(). Does nothing."""
         pass
-    def erase(self):
+    
+    def erase(self) -> None:
+        """Mock implementation of coverage.erase(). Does nothing."""
         pass
-    def start(self):
+    
+    def start(self) -> None:
+        """Mock implementation of coverage.start(). Does nothing."""
         pass
-    def __getattr__(self, name):
+    
+    def __getattr__(self, name: str) -> 'MockCoverage':
+        """
+        Return a new MockCoverage instance for any attribute access.
+        
+        This enables method chaining and attribute access without errors.
+        For example: coverage.process_startup() returns MockCoverage()
+        """
         return MockCoverage()
+    
+    def __call__(self, *args: Any, **kwargs: Any) -> 'MockCoverage':
+        """
+        Make the instance callable, returning itself.
+        
+        This supports usage like: coverage.process_startup()
+        """
+        return self
+    
+    def __bool__(self) -> bool:
+        """
+        Make the instance truthy in boolean contexts.
+        
+        This supports checks like: if coverage: ...
+        """
+        return True
+    
+    def __repr__(self) -> str:
+        """Return a string representation for debugging."""
+        return "MockCoverage()"
+    
+    def __enter__(self) -> 'MockCoverage':
+        """
+        Support context manager entry.
+        
+        Usage: with coverage: ...
+        """
+        return self
+    
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """
+        Support context manager exit.
+        
+        Usage: with coverage: ...
+        """
+        pass
+
 
 # Mock coverage modules to prevent interference
 mock_modules = ['coverage', 'coverage.types', 'coverage.tracer', 'coverage.collector', 'coverage.control']
