@@ -54,6 +54,56 @@ async def get_user_prediction_trends(
     days: int = 30
 ) -> Dict[str, Any]:
     """Get user's prediction trends for time-series visualization."""
+    if MongoDB.database is None:
+        logger.warning("MongoDB not connected. Returning empty prediction trends.")
+        return {
+            "chart_type": CHART_TYPE_LINE,
+            "title": TITLE_PREDICTION_TRENDS,
+            "data": {
+                "labels": [],
+                "datasets": [
+                    {
+                        "label": LABEL_PREDICTIONS,
+                        "data": [],
+                        "borderColor": BORDER_COLOR_PREDICTIONS,
+                        "backgroundColor": BACKGROUND_COLOR_PREDICTIONS,
+                        "yAxisID": Y_AXIS_ID_Y
+                    },
+                    {
+                        "label": LABEL_AVG_CONFIDENCE,
+                        "data": [],
+                        "borderColor": BORDER_COLOR_CONFIDENCE,
+                        "backgroundColor": BACKGROUND_COLOR_CONFIDENCE,
+                        "yAxisID": Y_AXIS_ID_Y1
+                    }
+                ]
+            },
+            "options": {
+                "scales": {
+                    "y": {
+                        "type": AXIS_TYPE_LINEAR,
+                        "display": True,
+                        "position": AXIS_POSITION_LEFT,
+                        "title": {
+                            "display": True,
+                            "text": TEXT_NUM_PREDICTIONS
+                        }
+                    },
+                    "y1": {
+                        "type": AXIS_TYPE_LINEAR,
+                        "display": True,
+                        "position": AXIS_POSITION_RIGHT,
+                        "title": {
+                            "display": True,
+                            "text": TEXT_CONFIDENCE_SCORE
+                        },
+                        "min": 0,
+                        "max": 1
+                    }
+                }
+            }
+        }
+
     db = MongoDB.get_database()
 
     # Aggregate predictions by date
@@ -149,6 +199,35 @@ async def get_user_prediction_trends(
 
 async def get_emotion_distribution(user_id: Optional[str] = None, days: int = 30) -> Dict[str, Any]:
     """Get emotion distribution for pie/bar chart."""
+    if MongoDB.database is None:
+        logger.warning("MongoDB not connected. Returning empty emotion distribution.")
+        return {
+            "chart_type": "doughnut",
+            "title": "Emotion Distribution",
+            "data": {
+                "labels": [],
+                "datasets": [{
+                    "data": [],
+                    "backgroundColor": [],
+                    "hoverBackgroundColor": []
+                }]
+            },
+            "options": {
+                "responsive": True,
+                "plugins": {
+                    "legend": {
+                        "position": "right"
+                    },
+                    "tooltip": {
+                        "callbacks": {
+                            "label": "function(context) { return context.label + ': ' + context.parsed + ' predictions'; }"
+                        }
+                    }
+                }
+            },
+            "emotion_confidence": {}
+        }
+
     db = MongoDB.get_database()
 
     # Build match query

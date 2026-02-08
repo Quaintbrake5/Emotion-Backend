@@ -20,6 +20,22 @@ async def export_predictions_csv(
     include_features: bool = False
 ) -> StreamingResponse:
     """Export predictions data as CSV."""
+    if MongoDB.database is None:
+        logger.warning("MongoDB not connected. Returning empty CSV export.")
+        # Return empty CSV
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["No data available - MongoDB not connected"])
+        output.seek(0)
+        def generate():
+            yield output.getvalue()
+        filename = f"predictions_export_empty_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        return StreamingResponse(
+            generate(),
+            media_type=CSV_MEDIA_TYPE,
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+
     db = MongoDB.get_database()
 
     # Build query
@@ -155,6 +171,22 @@ async def export_predictions_json(
 
 async def export_analytics_csv(days: int = 30) -> StreamingResponse:
     """Export analytics data as CSV."""
+    if MongoDB.database is None:
+        logger.warning("MongoDB not connected. Returning empty analytics CSV export.")
+        # Return empty CSV
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["No analytics data available - MongoDB not connected"])
+        output.seek(0)
+        def generate():
+            yield output.getvalue()
+        filename = f"analytics_export_empty_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        return StreamingResponse(
+            generate(),
+            media_type=CSV_MEDIA_TYPE,
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+
     from services.analytics_service import get_ml_model_performance, get_system_analytics
 
     # Get analytics data

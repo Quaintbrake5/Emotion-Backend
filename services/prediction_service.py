@@ -69,6 +69,10 @@ async def save_prediction_to_mongo(
 
 async def update_prediction_processing_time(prediction_id: str, processing_time: float):
     """Update the processing time for a prediction."""
+    if MongoDB.database is None:
+        logger.warning("MongoDB not connected. Skipping processing time update.")
+        return
+
     db = MongoDB.get_database()
     await db[PREDICTIONS_COLLECTION].update_one(
         {"_id": prediction_id},
@@ -104,6 +108,16 @@ async def get_user_predictions(
 
 async def get_prediction_stats(user_id: str) -> Dict[str, Any]:
     """Get prediction statistics for a user."""
+    if MongoDB.database is None:
+        logger.warning("MongoDB not connected. Returning empty prediction stats.")
+        return {
+            "total_predictions": 0,
+            "emotions": [],
+            "avg_confidence": 0.0,
+            "avg_processing_time": 0.0,
+            "emotion_distribution": {}
+        }
+
     db = MongoDB.get_database()
 
     pipeline = [
@@ -174,19 +188,23 @@ async def process_audio_for_prediction_with_storage(
     emotion_str = primary_emotion[0]
     confidence = primary_emotion[1]
 
-    # Save to MongoDB
-    prediction_id = await save_prediction_to_mongo(
-        user_id=user_id,
-        filename=filename,
-        emotion=emotion_str,
-        confidence=confidence,
-        audio_duration=audio_duration,
-        spectrogram_id=spectrogram_id,
-        features=features
-    )
+    prediction_id = None
+    if MongoDB.database is not None:
+        # Save to MongoDB only if connected
+        prediction_id = await save_prediction_to_mongo(
+            user_id=user_id,
+            filename=filename,
+            emotion=emotion_str,
+            confidence=confidence,
+            audio_duration=audio_duration,
+            spectrogram_id=spectrogram_id,
+            features=features
+        )
 
-    # Update processing time
-    await update_prediction_processing_time(prediction_id, processing_time)
+        # Update processing time
+        await update_prediction_processing_time(prediction_id, processing_time)
+    else:
+        logger.warning("MongoDB not connected. Prediction not saved to database.")
 
     return {
         "prediction_id": prediction_id,

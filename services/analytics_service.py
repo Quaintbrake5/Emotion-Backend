@@ -3,7 +3,7 @@ from sqlalchemy import func, desc
 from models import User, Prediction, AudioFile, UserActivity, UserStatistics, PredictionAnalytics, SystemMetrics
 from schema import UserStatisticsResponse, UserActivityResponse, PredictionAnalyticsResponse, SystemMetricsResponse
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 import logging
 import json
 from database_mongo import MongoDB, PREDICTIONS_COLLECTION, ANALYTICS_COLLECTION
@@ -357,6 +357,13 @@ def _calculate_daily_trends(trends: dict, date_key: str, predictions: list) -> N
 
 async def get_ml_model_performance(days: int = 30) -> dict:
     """Get ML model performance analytics from MongoDB."""
+    if MongoDB.database is None:
+        logger.warning("MongoDB not connected. Returning empty ML model performance data.")
+        return {
+            "model_performance": {},
+            "daily_trends": {}
+        }
+
     db = MongoDB.get_database()
     start_date = datetime.now(datetime.timezone.utc) - timedelta(days=days)
 
@@ -389,6 +396,16 @@ async def get_ml_model_performance(days: int = 30) -> dict:
 
 async def get_system_analytics(days: int = 30) -> dict:
     """Get system analytics from MongoDB."""
+    if MongoDB.database is None:
+        logger.warning("MongoDB not connected. Returning empty system analytics data.")
+        return {
+            "period_days": days,
+            "total_predictions": 0,
+            "active_users": 0,
+            "emotion_distribution": {},
+            "daily_activity": {}
+        }
+
     db = MongoDB.get_database()
     start_date = datetime.now(datetime.timezone.utc) - timedelta(days=days)
 
@@ -504,6 +521,20 @@ def _calculate_weekly_activity(predictions: list) -> dict:
 
 async def get_user_insights(user_id: str) -> dict:
     """Get user insights from MongoDB."""
+    if MongoDB.database is None:
+        logger.warning("MongoDB not connected. Returning empty user insights data.")
+        return {
+            "user_id": user_id,
+            "total_predictions": 0,
+            "avg_confidence": 0,
+            "most_common_emotion": None,
+            "prediction_streak": 0,
+            "first_prediction": None,
+            "last_prediction": None,
+            "weekly_activity": {},
+            "emotion_distribution": {}
+        }
+
     db = MongoDB.get_database()
 
     # Get all predictions for the user

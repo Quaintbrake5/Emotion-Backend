@@ -14,12 +14,12 @@ class MongoDB:
     @classmethod
     async def connect_to_mongo(cls):
         """Connect to MongoDB (Render + Atlas safe)"""
-        # Default to localhost for local development, production uses env var
-        mongo_url = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+        # Only connect if MONGODB_URL is explicitly set
+        mongo_url = os.getenv("MONGODB_URL")
         database_name = os.getenv("MONGODB_DATABASE", "emotion_recognition")
 
         if not mongo_url:
-            logger.warning("MONGODB_URL not set. MongoDB features disabled.")
+            logger.info("MONGODB_URL not set. Skipping MongoDB connection for local development.")
             return
 
         try:
