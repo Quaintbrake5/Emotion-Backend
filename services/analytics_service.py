@@ -3,7 +3,7 @@ from sqlalchemy import func, desc
 from models import User, Prediction, AudioFile, UserActivity, UserStatistics, PredictionAnalytics, SystemMetrics
 from schema import UserStatisticsResponse, UserActivityResponse, PredictionAnalyticsResponse, SystemMetricsResponse
 from typing import List, Optional, Dict, Any
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 import logging
 import json
 from database_mongo import MongoDB, PREDICTIONS_COLLECTION, ANALYTICS_COLLECTION
