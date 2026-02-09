@@ -97,6 +97,14 @@ class MockCoverage(object):
         """
         pass
 
+    def __or__(self, other):
+        """
+        Support for union types (PEP 604).
+        """
+        if other is None:
+            return MockCoverage()
+        return MockCoverage()
+
     @classmethod
     def __mro_entries__(cls, namespace):
         """
