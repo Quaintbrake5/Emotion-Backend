@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class MockCoverage:
+class MockCoverage(object):
     """
     Mock implementation of the coverage module to prevent interference with audio libraries.
     
@@ -92,10 +92,23 @@ class MockCoverage:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """
         Support context manager exit.
-        
+
         Usage: with coverage: ...
         """
         pass
+
+    @classmethod
+    def __mro_entries__(cls, namespace):
+        """
+        Support for PEP 560 generic types.
+        """
+        return (cls, object)
+
+    def __mro_entries__(self, namespace):
+        """
+        Support for PEP 560 generic types on instances.
+        """
+        return (object,)
 
 
 # Mock coverage modules to prevent interference
