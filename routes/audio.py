@@ -140,9 +140,18 @@ async def predict_emotion(
         if len(signal) == 0:
             raise HTTPException(status_code=400, detail="Audio file appears to be empty or corrupted")
 
-        emotion_probabilities = process_audio_for_prediction(signal)
+        # Process audio and save to MongoDB
+        from services.prediction_service import process_audio_for_prediction_with_storage
+        prediction_result = await process_audio_for_prediction_with_storage(
+            signal=signal,
+            user_id=str(current_user.id),
+            filename=audio.filename,
+            audio_duration=len(signal) / SAMPLE_RATE
+        )
 
-        # Save prediction to database
+        emotion_probabilities = prediction_result["emotion"]
+
+        # Save prediction to PostgreSQL database
         db_prediction = Prediction(
             user_id=current_user.id,
             filename=audio.filename,
