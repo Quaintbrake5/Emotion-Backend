@@ -4,6 +4,8 @@ import tempfile
 from typing import Tuple, Dict, Any
 from utils.constants import SAMPLE_RATE
 
+
+
 # Disable coverage for this module to prevent interference with audio libraries
 os.environ['COVERAGE_PROCESS_START'] = ''
 
@@ -200,7 +202,7 @@ def extract_mfcc(signal: np.ndarray, n_mfcc: int = 40) -> np.ndarray:
     mfcc = np.mean(mfcc.T, axis=0)
     return mfcc
 
-def generate_spectrogram(signal: np.ndarray, target_size: tuple = (150, 120)) -> np.ndarray:
+def generate_spectrogram(signal: np.ndarray, target_size: tuple = (180, 120)) -> np.ndarray:
     """Generate spectrogram image from audio signal."""
     # Generate mel spectrogram
     mel_spec = librosa.feature.melspectrogram(y=signal, sr=SAMPLE_RATE, n_mels=128, fmax=8000)

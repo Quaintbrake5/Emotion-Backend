@@ -13,6 +13,8 @@ def get_embedding(spectrogram: np.ndarray) -> np.ndarray:
     if extractor is None:
         raise ValueError("CNN model not loaded. Please ensure the model file 'best_cnn.keras' exists in the models directory and TensorFlow is properly installed.")
     # spectrogram should already be in shape (height, width, channels)
+    if len(spectrogram.shape) == 2:
+        spectrogram = spectrogram[..., np.newaxis]
     spectrogram = spectrogram[np.newaxis, ...]  # Add batch dimension
     prediction = extractor.predict(spectrogram)
     return prediction
