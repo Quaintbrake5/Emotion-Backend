@@ -28,54 +28,12 @@ async def record_and_predict_emotion(
     req: Request = None
 ):
     logger.info(f"Request received: {req.method} {req.url.path} for user {current_user.username}")
-    temp_path = None
-    try:
-        # Record audio from microphone
-        duration = request.duration or 3
-        recording = record_audio(duration)
 
-        # Save temporary file
-        temp_path = save_audio_temp(recording, f"temp_voice_{current_user.id}_{datetime.now().timestamp()}.wav")
-
-        # Check if models are loaded
-        from utils.constants import extractor, svm_model
-        if extractor is None or svm_model is None:
-            logger.error("ML models not loaded - cannot process audio prediction")
-            raise HTTPException(
-                status_code=503,
-                detail="Service temporarily unavailable: Machine learning models are not loaded. Please contact support."
-            )
-
-        # Process audio and predict emotion
-        emotion_probabilities = process_audio_for_prediction(recording)
-
-        # Get the primary emotion (highest probability)
-        primary_emotion = max(emotion_probabilities.items(), key=lambda x: x[1])[0]
-
-        # Save prediction to database
-        db_prediction = Prediction(
-            user_id=current_user.id,
-            filename=f"voice_recording_{datetime.now().timestamp()}.wav",
-            emotion_dict=emotion_probabilities,
-            audio_duration=duration,
-            model_type="hybrid"
-        )
-        db.add(db_prediction)
-        db.commit()
-        db.refresh(db_prediction)
-
-        logger.info(f"Voice recording prediction completed for user {current_user.username}: {primary_emotion}")
-        return VoiceRecordingResponse(
-            emotion=primary_emotion,
-            audio_duration=duration
-        )
-
-    except Exception as e:
-        logger.error(f"Voice recording failed for user {current_user.username}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Voice recording failed: {str(e)}")
-    finally:
-        if temp_path:
-            cleanup_temp_file(temp_path)
+    # Microphone recording is not available in production cloud environments
+    raise HTTPException(
+        status_code=501,
+        detail="Microphone recording is not supported in production. Please use the file upload feature (/predict endpoint) instead. Record audio on your device and upload the file."
+    )
 
 @router.post("/predict", response_model=PredictionResponse)
 async def predict_emotion(
