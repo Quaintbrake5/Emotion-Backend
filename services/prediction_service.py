@@ -1,7 +1,7 @@
 import numpy as np
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from database_mongo import MongoDB, PREDICTIONS_COLLECTION
 from utils.constants import extractor, svm_model, EMOTION_LABELS
@@ -191,22 +191,8 @@ async def process_audio_for_prediction_with_storage(
     confidence = primary_emotion[1]
 
     prediction_id = None
-    if MongoDB.database is not None:
-        # Save to MongoDB only if connected
-        prediction_id = await save_prediction_to_mongo(
-            user_id=user_id,
-            filename=filename,
-            emotion=emotion_str,
-            confidence=confidence,
-            audio_duration=audio_duration,
-            spectrogram_id=spectrogram_id,
-            features=features
-        )
-
-        # Update processing time
-        await update_prediction_processing_time(prediction_id, processing_time)
-    else:
-        logger.warning("MongoDB not connected. Prediction not saved to database.")
+    # MongoDB saving removed to ensure predictions work without MongoDB dependency
+    # Analytics features that require MongoDB will handle connection checks separately
 
     return {
         "prediction_id": prediction_id,
