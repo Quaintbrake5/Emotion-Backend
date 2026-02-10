@@ -1,12 +1,56 @@
 import numpy as np
 import time
 import logging
+import asyncio
+import tempfile
+import os
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from database_mongo import MongoDB, PREDICTIONS_COLLECTION
-from utils.constants import extractor, svm_model, EMOTION_LABELS
+from utils.constants import EMOTION_LABELS
+from gradio_client import Client
 
 logger = logging.getLogger(__name__)
+
+# Hugging Face Space URL - UPDATE THIS WITH YOUR DEPLOYED SPACE URL
+HF_SPACE_URL = "https://huggingface.co/spaces/Quaintbrake5/Emotion_Recognition_Model"  # Replace with actual URL
+
+async def call_hf_space_prediction(audio_file_path: str) -> Dict[str, float]:
+    """Call Hugging Face Space for emotion prediction."""
+    try:
+        client = Client(HF_SPACE_URL)
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, client.predict, audio_file_path, api_name="/predict"
+        )
+
+        # Parse the result - assuming it returns a string with probabilities
+        # The Gradio app returns a formatted string, we need to parse it
+        lines = result.strip().split('\n')
+        emotion_probabilities = {}
+
+        # Skip the first line (primary emotion) and parse the rest
+        for line in lines[1:]:
+            if ':' in line:
+                parts = line.split(':')
+                if len(parts) == 2:
+                    emotion = parts[0].strip().lower()
+                    prob_str = parts[1].strip().rstrip('%')
+                    try:
+                        prob = float(prob_str) / 100.0  # Convert percentage to decimal
+                        emotion_probabilities[emotion] = prob
+                    except ValueError:
+                        continue
+
+        # Ensure all emotions are present
+        for emotion in EMOTION_LABELS:
+            if emotion not in emotion_probabilities:
+                emotion_probabilities[emotion] = 0.0
+
+        return emotion_probabilities
+
+    except Exception as e:
+        logger.error(f"Error calling HF Space: {e}")
+        raise ValueError(f"Failed to get prediction from Hugging Face Space: {e}")
 
 def get_embedding(spectrogram: np.ndarray) -> np.ndarray:
     """Get prediction from CNN model."""
@@ -159,13 +203,23 @@ async def get_prediction_stats(user_id: str) -> Dict[str, Any]:
         "emotion_distribution": {}
     }
 
-def process_audio_for_prediction(signal: np.ndarray) -> Dict[str, float]:
-    """Complete pipeline: generate spectrogram, get embedding, predict emotion."""
-    from .audio_service import generate_spectrogram
-    spectrogram = generate_spectrogram(signal)
-    embedding = get_embedding(spectrogram)
-    emotion_probabilities = predict_emotion(embedding)
-    return emotion_probabilities
+async def process_audio_for_prediction(signal: np.ndarray) -> Dict[str, float]:
+    """Complete pipeline: save audio temporarily, call HF Space, get emotion predictions."""
+    # Save audio signal to temporary file
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+        temp_path = temp_file.name
+        # Save as WAV using soundfile
+        import soundfile as sf
+        sf.write(temp_path, signal, 22050)
+
+    try:
+        # Call Hugging Face Space
+        emotion_probabilities = await call_hf_space_prediction(temp_path)
+        return emotion_probabilities
+    finally:
+        # Clean up temporary file
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
 
 async def process_audio_for_prediction_with_storage(
     signal: np.ndarray,
