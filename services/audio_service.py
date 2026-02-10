@@ -150,10 +150,16 @@ except (ImportError, OSError) as e:
 def load_audio(file_path: str) -> np.ndarray:
     """Load audio file and return the signal."""
     try:
-        # Check if file is WebM and convert if necessary
+        # Check if file is WebM or M4A and convert if necessary
         if _is_webm_file(file_path):
             print(f"Detected WebM file: {file_path}, converting to WAV...")
             converted_path = _convert_webm_to_wav(file_path)
+            # Use the converted file for loading
+            temp_file_path = converted_path
+            cleanup_converted = True
+        elif _is_m4a_file(file_path):
+            print(f"Detected M4A file: {file_path}, converting to WAV...")
+            converted_path = _convert_m4a_to_wav(file_path)
             # Use the converted file for loading
             temp_file_path = converted_path
             cleanup_converted = True
@@ -176,6 +182,8 @@ def load_audio(file_path: str) -> np.ndarray:
                     signal = []
                     for buf in f:
                         signal.append(buf)
+                    if not signal:
+                        raise ValueError("Audioread returned no audio data")
                     signal = np.concatenate(signal)
                     sr = f.samplerate
                     # Ensure mono
@@ -184,7 +192,14 @@ def load_audio(file_path: str) -> np.ndarray:
                     if sr != SAMPLE_RATE:
                         signal = librosa.resample(signal, orig_sr=sr, target_sr=SAMPLE_RATE)
             except Exception as ar_error:
-                raise ValueError(f"Failed to load audio with both soundfile and audioread: sf_error={sf_error}, ar_error={ar_error}")
+                print(f"Audioread failed: {ar_error}, falling back to librosa with warnings suppressed")
+                try:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", UserWarning)
+                        warnings.simplefilter("ignore", FutureWarning)
+                        signal, _ = librosa.load(temp_file_path, sr=SAMPLE_RATE)
+                except Exception as librosa_error:
+                    raise ValueError(f"Failed to load audio with soundfile, audioread, and librosa: sf_error={sf_error}, ar_error={ar_error}, librosa_error={librosa_error}")
 
         print(f"Successfully loaded audio: shape={signal.shape}, dtype={signal.dtype}, min={signal.min():.4f}, max={signal.max():.4f}")
 
@@ -296,6 +311,18 @@ def _is_webm_file(file_path: str) -> bool:
     except Exception:
         return False
 
+def _is_m4a_file(file_path: str) -> bool:
+    """Check if file is M4A/MP4 format by extension or header."""
+    if file_path.lower().endswith('.m4a') or file_path.lower().endswith('.mp4'):
+        return True
+    try:
+        with open(file_path, 'rb') as f:
+            header = f.read(12)
+            # M4A/MP4 files start with ftyp
+            return header[4:8] == b'ftyp'
+    except Exception:
+        return False
+
 def _convert_webm_to_wav(input_path: str) -> str:
     """Convert WebM file to WAV using ffmpeg."""
     output_fd, output_path = tempfile.mkstemp(suffix='.wav')
@@ -327,3 +354,35 @@ def _convert_webm_to_wav(input_path: str) -> str:
         raise FileNotFoundError("FFmpeg not found. Please install ffmpeg to handle WebM files")
     except Exception as e:
         raise RuntimeError(f"Failed to convert WebM to WAV: {str(e)}")
+
+def _convert_m4a_to_wav(input_path: str) -> str:
+    """Convert M4A file to WAV using ffmpeg."""
+    output_fd, output_path = tempfile.mkstemp(suffix='.wav')
+    os.close(output_fd)
+
+    try:
+        # Use ffmpeg to convert M4A to WAV
+        cmd = [
+            'ffmpeg',
+            '-i', input_path,  # input file
+            '-acodec', 'pcm_s16le',  # convert to PCM 16-bit
+            '-ar', str(SAMPLE_RATE),  # set sample rate
+            '-ac', '1',  # mono channel
+            '-y',  # overwrite output
+            output_path  # output file
+        ]
+
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+
+        if result.returncode != 0:
+            raise RuntimeError(f"FFmpeg conversion failed: {result.stderr}")
+
+        print(f"Successfully converted M4A to WAV: {input_path} -> {output_path}")
+        return output_path
+
+    except subprocess.TimeoutExpired:
+        raise TimeoutError("Audio conversion timed out")
+    except FileNotFoundError:
+        raise FileNotFoundError("FFmpeg not found. Please install ffmpeg to handle M4A files")
+    except Exception as e:
+        raise RuntimeError(f"Failed to convert M4A to WAV: {str(e)}")
