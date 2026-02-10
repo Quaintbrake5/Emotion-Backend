@@ -1,6 +1,7 @@
 import os
 import subprocess
 import tempfile
+import warnings
 from typing import Tuple, Dict, Any
 from utils.constants import SAMPLE_RATE
 
@@ -131,6 +132,7 @@ try:
     import librosa
     import numpy as np
     import soundfile as sf
+    import audioread as ar
     from skimage.transform import resize
     AUDIO_LIBRARIES_AVAILABLE = True
 except ImportError as e:
@@ -159,15 +161,31 @@ def load_audio(file_path: str) -> np.ndarray:
             temp_file_path = file_path
             cleanup_converted = False
 
-        # First try to read the file with soundfile to check if it's a valid audio file
-        import soundfile as sf
+        # Load audio using soundfile or audioread to avoid librosa warnings
         try:
-            info = sf.info(temp_file_path)
-            print(f"Audio file info: {info}")
+            signal, sr = sf.read(temp_file_path, dtype='float32')
+            # Ensure mono
+            if signal.ndim > 1:
+                signal = signal.mean(axis=1)
+            if sr != SAMPLE_RATE:
+                signal = librosa.resample(signal, orig_sr=sr, target_sr=SAMPLE_RATE)
         except Exception as sf_error:
-            print(f"Soundfile info failed: {sf_error}")
+            print(f"Soundfile failed: {sf_error}, trying audioread")
+            try:
+                with ar.audio_open(temp_file_path) as f:
+                    signal = []
+                    for buf in f:
+                        signal.append(buf)
+                    signal = np.concatenate(signal)
+                    sr = f.samplerate
+                    # Ensure mono
+                    if signal.ndim > 1:
+                        signal = signal.mean(axis=1)
+                    if sr != SAMPLE_RATE:
+                        signal = librosa.resample(signal, orig_sr=sr, target_sr=SAMPLE_RATE)
+            except Exception as ar_error:
+                raise ValueError(f"Failed to load audio with both soundfile and audioread: sf_error={sf_error}, ar_error={ar_error}")
 
-        signal, _ = librosa.load(temp_file_path, sr=SAMPLE_RATE)
         print(f"Successfully loaded audio: shape={signal.shape}, dtype={signal.dtype}, min={signal.min():.4f}, max={signal.max():.4f}")
 
         # Clean up converted file if we created one
