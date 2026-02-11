@@ -8,8 +8,10 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from database_mongo import MongoDB, PREDICTIONS_COLLECTION
 from utils.constants import EMOTION_LABELS
-import requests
+from gradio_client import Client
 import aiofiles
+import aiofiles.tempfile
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +28,12 @@ async def call_hf_space_prediction(audio_file_path: str) -> Dict[str, float]:
         # Prepare files for multipart upload
         files = {'files': ('audio.wav', file_data, 'audio/wav')}
 
-        # Make HTTP request in thread pool
+        # Make HTTP request to Gradio API endpoint
         response = await asyncio.get_event_loop().run_in_executor(
             None,
             lambda: requests.post(
-                f"{HF_SPACE_URL}/process_audio",
-                files=files,
+                f"{HF_SPACE_URL}/gradio_api/call/process_audio",
+                json={"data": [file_data]},  # Gradio expects JSON data
                 timeout=30
             )
         )
@@ -184,21 +186,21 @@ async def get_prediction_stats(user_id: str) -> Dict[str, Any]:
 
 async def process_audio_for_prediction(signal: np.ndarray) -> Dict[str, float]:
     """Complete pipeline: save audio temporarily, call HF Space, get emotion predictions."""
-    # Save audio signal to temporary file
-    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
+    # Save audio signal to temporary file asynchronously
+    async with aiofiles.tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_file:
         temp_path = temp_file.name
-        # Save as WAV using soundfile
+        # Save as WAV using soundfile (run synchronously in executor)
         import soundfile as sf
-        sf.write(temp_path, signal, 22050)
+        await asyncio.get_event_loop().run_in_executor(None, sf.write, temp_path, signal, 22050)
 
     try:
         # Call Hugging Face Space
         emotion_probabilities = await call_hf_space_prediction(temp_path)
         return emotion_probabilities
     finally:
-        # Clean up temporary file
+        # Clean up temporary file asynchronously
         if os.path.exists(temp_path):
-            os.unlink(temp_path)
+            await asyncio.get_event_loop().run_in_executor(None, os.unlink, temp_path)
 
 async def process_audio_for_prediction_with_storage(
     signal: np.ndarray,
