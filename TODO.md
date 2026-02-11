@@ -6,6 +6,6 @@
 - [x] Modify `Emotion-Backend/services/prediction_service.py` to use `gradio_client` for calling the deployed Hugging Face Space instead of local predictions.
 - [x] Update `process_audio_for_prediction` and `process_audio_for_prediction_with_storage` functions to send audio data to the space and receive results asynchronously.
 - [x] Add necessary imports and error handling for `gradio_client` calls in the prediction service.
-- [ ] Test the backend integration to ensure predictions work without local model loading.
-- [ ] Deploy the Gradio app to Hugging Face Spaces and update the Space URL in the backend code.
-- [ ] Monitor for performance and implement error handling (e.g., timeouts, retries) for the API calls.
+- [x] Test the backend integration to ensure predictions work without local model loading.
+- [x] Deploy the Gradio app to Hugging Face Spaces and update the Space URL in the backend code.
+- [x] Monitor for performance and implement error handling (e.g., timeouts, retries) for the API calls.

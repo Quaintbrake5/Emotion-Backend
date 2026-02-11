@@ -8,78 +8,57 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from database_mongo import MongoDB, PREDICTIONS_COLLECTION
 from utils.constants import EMOTION_LABELS
-from gradio_client import Client
+import requests
+import aiofiles
 
 logger = logging.getLogger(__name__)
 
 # Hugging Face Space URL - UPDATE THIS WITH YOUR DEPLOYED SPACE URL
-HF_SPACE_URL = "https://huggingface.co/spaces/Quaintbrake5/Emotion_Recognition_Model"  # Replace with actual URL
+HF_SPACE_URL = "https://quaintbrake5-emotion-recognition-model.hf.space"  # Direct Space URL for API access
 
 async def call_hf_space_prediction(audio_file_path: str) -> Dict[str, float]:
-    """Call Hugging Face Space for emotion prediction."""
+    """Call Hugging Face Space for emotion prediction using direct HTTP."""
     try:
-        client = Client(HF_SPACE_URL)
-        result = await asyncio.get_event_loop().run_in_executor(
-            None, client.predict, audio_file_path, api_name="/predict"
+        # Read file asynchronously
+        async with aiofiles.open(audio_file_path, 'rb') as f:
+            file_data = await f.read()
+
+        # Prepare files for multipart upload
+        files = {'files': ('audio.wav', file_data, 'audio/wav')}
+
+        # Make HTTP request in thread pool
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: requests.post(
+                f"{HF_SPACE_URL}/process_audio",
+                files=files,
+                timeout=30
+            )
         )
 
-        # Parse the result - assuming it returns a string with probabilities
-        # The Gradio app returns a formatted string, we need to parse it
-        lines = result.strip().split('\n')
-        emotion_probabilities = {}
+        if response.status_code != 200:
+            raise ValueError(f"HTTP {response.status_code}: {response.text}")
 
-        # Skip the first line (primary emotion) and parse the rest
-        for line in lines[1:]:
-            if ':' in line:
-                parts = line.split(':')
-                if len(parts) == 2:
-                    emotion = parts[0].strip().lower()
-                    prob_str = parts[1].strip().rstrip('%')
-                    try:
-                        prob = float(prob_str) / 100.0  # Convert percentage to decimal
-                        emotion_probabilities[emotion] = prob
-                    except ValueError:
-                        continue
+        # Parse the JSON response
+        import json
+        result = response.json()
+
+        # Check if it's an error response
+        if "error" in result:
+            raise ValueError(f"Gradio app error: {result['error']}")
 
         # Ensure all emotions are present
         for emotion in EMOTION_LABELS:
-            if emotion not in emotion_probabilities:
-                emotion_probabilities[emotion] = 0.0
+            if emotion not in result:
+                result[emotion] = 0.0
 
-        return emotion_probabilities
+        return result
 
     except Exception as e:
         logger.error(f"Error calling HF Space: {e}")
         raise ValueError(f"Failed to get prediction from Hugging Face Space: {e}")
 
-def get_embedding(spectrogram: np.ndarray) -> np.ndarray:
-    """Get prediction from CNN model."""
-    if extractor is None:
-        raise ValueError("CNN model not loaded. Please ensure the model file 'best_cnn.keras' exists in the models directory and TensorFlow is properly installed.")
-    # spectrogram should already be in shape (height, width, channels)
-    if len(spectrogram.shape) == 2:
-        spectrogram = spectrogram[..., np.newaxis]
-    spectrogram = spectrogram[np.newaxis, ...]  # Add batch dimension
-    prediction = extractor.predict(spectrogram)
-    return prediction
-
-def predict_emotion(embedding: np.ndarray) -> Dict[str, float]:
-    """Extract emotion probabilities from SVM prediction on CNN embedding."""
-    if svm_model is None:
-        raise ValueError("SVM model not loaded. Please ensure the model file 'best_svm.pkl' exists in the models directory and scikit-learn is properly installed.")
-
-    # Get probabilities from SVM
-    probabilities = svm_model.predict_proba(embedding.reshape(1, -1))[0]
-
-    # Return all emotions with their probabilities
-    emotion_probabilities = {}
-    for i, emotion in enumerate(EMOTION_LABELS):
-        if i < len(probabilities):
-            emotion_probabilities[emotion] = float(probabilities[i])
-        else:
-            emotion_probabilities[emotion] = 0.0
-
-    return emotion_probabilities
+# Local model functions removed - now using HF Space for predictions
 
 async def save_prediction_to_mongo(
     user_id: str,
@@ -229,13 +208,11 @@ async def process_audio_for_prediction_with_storage(
     spectrogram_id: Optional[str] = None,
     features: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
-    """Complete pipeline with MongoDB storage: generate spectrogram, get embedding, predict emotion, save result."""
+    """Complete pipeline with MongoDB storage: call HF Space for emotion prediction."""
     start_time = time.time()
 
-    from .audio_service import generate_spectrogram
-    spectrogram = generate_spectrogram(signal)
-    embedding = get_embedding(spectrogram)
-    emotion_probabilities = predict_emotion(embedding)
+    # Call HF Space for prediction
+    emotion_probabilities = await process_audio_for_prediction(signal)
 
     processing_time = time.time() - start_time
 
