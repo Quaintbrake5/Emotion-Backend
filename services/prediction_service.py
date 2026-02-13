@@ -16,7 +16,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 # Hugging Face Space URL - UPDATE THIS WITH YOUR DEPLOYED SPACE URL
-HF_SPACE_URL = "https://huggingface.co/spaces/Quaintbrake5/Emotion_Recognition_Model"  # Direct Space URL for API access
+HF_SPACE_URL = "https://quaintbrake5-emotion-recognition-model.hf.space"  # Direct Space URL for API access
 
 # Gradio client instance (lazy initialization)
 _gradio_client = None
