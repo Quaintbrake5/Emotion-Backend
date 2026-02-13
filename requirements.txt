@@ -1,3 +1,9 @@
+# This file lists the dependencies for the Emotion-Backend project. To install these dependencies, you can use the following command:
+
+# Priority installation first
+setuptools>=70.1.0
+
+# Regular dependencies after setuptools
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
@@ -23,4 +29,3 @@ librosa==0.10.0
 soundfile==0.12.1
 numpy==1.24.3
 scipy==1.11.1
-setuptools>=70.1
