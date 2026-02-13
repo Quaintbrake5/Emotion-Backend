@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from database_mongo import MongoDB, PREDICTIONS_COLLECTION
 from utils.constants import EMOTION_LABELS
-from gradio_client import Client
+from gradio_client import Client, handle_file
 import aiofiles
 import aiofiles.tempfile
 import requests
@@ -16,45 +16,54 @@ import requests
 logger = logging.getLogger(__name__)
 
 # Hugging Face Space URL - UPDATE THIS WITH YOUR DEPLOYED SPACE URL
-HF_SPACE_URL = "https://quaintbrake5-emotion-recognition-model.hf.space"  # Direct Space URL for API access
+HF_SPACE_URL = "https://huggingface.co/spaces/Quaintbrake5/Emotion_Recognition_Model"  # Direct Space URL for API access
+
+# Gradio client instance (lazy initialization)
+_gradio_client = None
+
+def get_gradio_client() -> Client:
+    """Get or create the Gradio client instance."""
+    global _gradio_client
+    if _gradio_client is None:
+        _gradio_client = Client(HF_SPACE_URL)
+    return _gradio_client
 
 async def call_hf_space_prediction(audio_file_path: str) -> Dict[str, float]:
-    """Call Hugging Face Space for emotion prediction using direct HTTP."""
+    """Call Hugging Face Space for emotion prediction using Gradio client."""
     try:
-        # Read file asynchronously
-        async with aiofiles.open(audio_file_path, 'rb') as f:
-            file_data = await f.read()
-
-        # Prepare files for multipart upload
-        files = {'files': ('audio.wav', file_data, 'audio/wav')}
-
-        # Make HTTP request to Gradio API endpoint
-        response = await asyncio.get_event_loop().run_in_executor(
+        # Use Gradio client to make prediction
+        # The handle_file function handles both local files and URLs
+        client = get_gradio_client()
+        
+        # Run the prediction in executor to avoid blocking the async event loop
+        result = await asyncio.get_event_loop().run_in_executor(
             None,
-            lambda: requests.post(
-                f"{HF_SPACE_URL}/gradio_api/call/process_audio",
-                json={"data": [file_data]},  # Gradio expects JSON data
-                timeout=30
+            lambda: client.predict(
+                audio=handle_file(audio_file_path),
+                api_name="/process_audio"
             )
         )
 
-        if response.status_code != 200:
-            raise ValueError(f"HTTP {response.status_code}: {response.text}")
-
-        # Parse the JSON response
+        # Parse the result - it comes as a JSON string
         import json
-        result = response.json()
+        if isinstance(result, str):
+            prediction = json.loads(result)
+        else:
+            prediction = result
 
         # Check if it's an error response
-        if "error" in result:
-            raise ValueError(f"Gradio app error: {result['error']}")
+        if isinstance(prediction, dict) and "error" in prediction:
+            raise ValueError(f"Gradio app error: {prediction['error']}")
 
         # Ensure all emotions are present
-        for emotion in EMOTION_LABELS:
-            if emotion not in result:
-                result[emotion] = 0.0
-
-        return result
+        if isinstance(prediction, dict):
+            for emotion in EMOTION_LABELS:
+                if emotion not in prediction:
+                    prediction[emotion] = 0.0
+            return prediction
+        else:
+            # If result is not a dict, raise an error
+            raise ValueError(f"Unexpected result format: {type(result)} - {result}")
 
     except Exception as e:
         logger.error(f"Error calling HF Space: {e}")

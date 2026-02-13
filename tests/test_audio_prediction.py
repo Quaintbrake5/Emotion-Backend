@@ -11,8 +11,8 @@ import tempfile
 import soundfile as sf
 from datetime import datetime, timezone
 
-# Add current directory to path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory to path to import services
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def create_test_audio(duration=3.0, sample_rate=22050):
     """Create a simple test audio file with a sine wave."""
