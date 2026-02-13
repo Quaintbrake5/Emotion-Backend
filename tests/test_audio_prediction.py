@@ -57,9 +57,15 @@ def test_prediction_pipeline():
     print("Testing prediction pipeline...")
     try:
         from services.prediction_service import process_audio_for_prediction
+        import asyncio
 
         signal = create_test_audio(duration=2.0)
-        result = process_audio_for_prediction(signal)
+        
+        # Run the async function properly
+        async def run_prediction():
+            return await process_audio_for_prediction(signal)
+        
+        result = asyncio.run(run_prediction())
 
         if isinstance(result, dict) and len(result) > 0:
             print(f"✓ Prediction successful: {result}")

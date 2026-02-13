@@ -16,7 +16,8 @@ import requests
 logger = logging.getLogger(__name__)
 
 # Hugging Face Space URL - UPDATE THIS WITH YOUR DEPLOYED SPACE URL
-HF_SPACE_URL = "https://quaintbrake5-emotion-recognition-model.hf.space"  # Direct Space URL for API access
+# Use the repository name for the Gradio client (works better than direct URL)
+HF_SPACE_URL = "Quaintbrake5/Emotion_Recognition_Model"  # Can also use full URL like "https://quaintbrake5-emotion-recognition-model.hf.space"
 
 # Gradio client instance (lazy initialization)
 _gradio_client = None
@@ -30,6 +31,7 @@ def get_gradio_client() -> Client:
 
 async def call_hf_space_prediction(audio_file_path: str) -> Dict[str, float]:
     """Call Hugging Face Space for emotion prediction using Gradio client."""
+    client = None
     try:
         # Use Gradio client to make prediction
         # The handle_file function handles both local files and URLs
@@ -44,12 +46,79 @@ async def call_hf_space_prediction(audio_file_path: str) -> Dict[str, float]:
             )
         )
 
-        # Parse the result - it comes as a JSON string
+        # Check if result is None or empty
+        if result is None:
+            raise ValueError("Gradio Space returned None. The Space might be busy or not responding properly.")
+        
+        if result == "" or (isinstance(result, str) and len(result.strip()) == 0):
+            raise ValueError("Gradio Space returned an empty response. The Space might be experiencing issues.")
+
+        # Parse the result - it may come as a JSON string or directly as a dict
         import json
+        import re
+        prediction = None
+        
         if isinstance(result, str):
-            prediction = json.loads(result)
+            # Try to parse as JSON
+            try:
+                prediction = json.loads(result)
+            except json.JSONDecodeError as je:
+                # If it's not JSON, it might be the raw text output from Gradio
+                # In this case, try to extract emotion data from the text
+                logger.warning(f"Result is not JSON: {result}")
+                
+                # Try to parse text format like:
+                # Primary Emotion: Angry (44.61%)
+                #
+                # All Probabilities:
+                # Angry: 44.61%
+                # Disgust: 19.32%
+                # Fear: 10.13%
+                # Happy: 15.14%
+                # Neutral: 4.21%
+                # Sad: 6.59%
+                
+                # Look for patterns like "Emotion: XX.XX%"
+                emotion_pattern = r'(\w+):\s*(\d+\.?\d*)%'
+                matches = re.findall(emotion_pattern, result)
+                
+                if matches:
+                    prediction = {}
+                    for emotion, prob in matches:
+                        # Normalize emotion names
+                        emotion_lower = emotion.lower()
+                        if emotion_lower == 'angry':
+                            prediction['angry'] = float(prob) / 100.0
+                        elif emotion_lower == 'disgust':
+                            prediction['disgust'] = float(prob) / 100.0
+                        elif emotion_lower == 'fear':
+                            prediction['fear'] = float(prob) / 100.0
+                        elif emotion_lower == 'happy':
+                            prediction['happy'] = float(prob) / 100.0
+                        elif emotion_lower == 'neutral':
+                            prediction['neutral'] = float(prob) / 100.0
+                        elif emotion_lower == 'sad':
+                            prediction['sad'] = float(prob) / 100.0
+                        else:
+                            prediction[emotion_lower] = float(prob) / 100.0
+                    logger.info(f"Parsed text result to dict: {prediction}")
+                
+                # If still not parsed, try eval as last resort
+                if prediction is None and result.startswith('{') and result.endswith('}'):
+                    try:
+                        prediction = eval(result)
+                    except:
+                        pass
+                
+                # If still not parsed, raise an error with the original result
+                if prediction is None:
+                    raise ValueError(f"Could not parse Gradio result as JSON: {je}. Raw result: {result[:500]}")
         else:
             prediction = result
+
+        # If still no prediction, raise an error
+        if prediction is None:
+            raise ValueError(f"Could not parse result: {result}")
 
         # Check if it's an error response
         if isinstance(prediction, dict) and "error" in prediction:
@@ -65,6 +134,9 @@ async def call_hf_space_prediction(audio_file_path: str) -> Dict[str, float]:
             # If result is not a dict, raise an error
             raise ValueError(f"Unexpected result format: {type(result)} - {result}")
 
+    except ValueError:
+        # Re-raise ValueError as-is
+        raise
     except Exception as e:
         logger.error(f"Error calling HF Space: {e}")
         raise ValueError(f"Failed to get prediction from Hugging Face Space: {e}")
