@@ -4,19 +4,19 @@
 setuptools>=70.1.0
 
 # Regular dependencies after setuptools
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-python-multipart==0.0.6
-pydantic==2.5.0
-sqlalchemy==2.0.23
-psycopg2-binary==2.9.7
+fastapi==0.115.8
+uvicorn[standard]==0.34.0
+python-multipart==0.0.9
+pydantic==2.10.6
+sqlalchemy==2.0.38
+psycopg2-binary==2.9.10
 alembic==1.12.1
-motor==3.3.2
-pymongo==4.6.0
+motor==3.7.0
+pymongo==4.11.1
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-decouple==3.8
-aiofiles==23.2.1
+aiofiles==24.1.0
 requests==2.31.0
 gradio-client==0.8.1
 pyotp==2.9.0
@@ -25,7 +25,8 @@ email-validator==2.1.0
 jinja2==3.1.2
 slowapi==0.1.9
 python-dotenv==1.0.0
-librosa==0.10.0
-soundfile==0.12.1
-numpy==1.24.3
-scipy==1.11.1
+librosa==0.10.2.post1
+soundfile==0.13.1
+numpy==2.2.2
+scipy==1.15.1
+wheel==0.45.0
