@@ -12,7 +12,7 @@ services:
       - key: RENDER
         value: "true"
       - key: DATABASE_URL
-        value: "postgresql://emotion_db_zddq_user:jtUUHyW7xoPBV7WtAY3li6TCPWF9Wwo5@dpg-d5n1t2ogjchc7392kih0-a/emotion_db_zddq"
+        value: "postgresql://emotion_data_user:ll0HxcVjbY2lBvyZ1wWqPXVs8JtOXPcd@dpg-d6iq67hdrdic73eigsrg-a/emotion_data"
       - key: MONGODB_URL
         value: "mongodb+srv://denzylibe04_db_user:XLR8*xlr8%26@emotion.qlircss.mongodb.net/emotion_recognition?retryWrites=true&w=majority&appName=Emotion"
       - key: MONGO_DATABASE

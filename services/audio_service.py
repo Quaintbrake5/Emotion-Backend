@@ -4,7 +4,7 @@ import tempfile
 import warnings
 from typing import Tuple, Dict, Any
 from utils.constants import SAMPLE_RATE
-
+from soundfile import soundfile
 
 
 # Disable coverage for this module to prevent interference with audio libraries
@@ -209,7 +209,7 @@ def load_audio(file_path: str) -> np.ndarray:
                 os.remove(temp_file_path)
             except PermissionError:
                 # File is still in use, log warning but don't fail
-                print(f"Warning: Could not delete temporary file {temp_file_path} - it may be in use by another process")
+                logger.warning("Could not delete temporary file %s - it may be in use by another process", temp_file_path)
 
         return signal
     except Exception as e:
